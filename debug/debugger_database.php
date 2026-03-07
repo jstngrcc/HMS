@@ -18,17 +18,10 @@
 
     if (isset($_POST['ResetDB'])) {
         $conn->query("DROP DATABASE IF EXISTS HMS");
+        $conn->query("CREATE DATABASE HMS");
+        $conn->select_db("HMS");
         require_once "debug_db.php";
-        echo "Database Resetted";
-    }
-
-    if (isset($_POST['ClearDB'])) {
-        $conn->execute_query("SET FOREIGN_KEY_CHECKS = 0");
-        $tables = $conn->query("SHOW TABLES");
-        while ($row = $tables->fetch_array()) {
-            $conn->query("TRUNCATE TABLE " . $row[0]);
-        }
-        echo "All Tables Cleared";
+        echo "Database Reset";
     }
     ?>
 
