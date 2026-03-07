@@ -4,20 +4,19 @@ USE HMS;
 -- =========================
 -- ROLES
 -- =========================
-CREATE TABLE Roles (
+CREATE TABLE IF NOT EXISTS Roles (
     RoleID INT AUTO_INCREMENT PRIMARY KEY,
     RoleName VARCHAR(50) NOT NULL UNIQUE
 );
 
 INSERT INTO Roles (RoleName) VALUES
 ('admin'),
-('staff'),
 ('guest');
 
 -- =========================
 -- USERS
 -- =========================
-CREATE TABLE Users (
+CREATE TABLE IF NOT EXISTS Users (
     UserID INT AUTO_INCREMENT PRIMARY KEY,
     RoleID INT NOT NULL,
     FirstName VARCHAR(100) NOT NULL,
@@ -33,7 +32,7 @@ CREATE TABLE Users (
 -- =========================
 -- BED TYPES
 -- =========================
-CREATE TABLE BedTypes (
+CREATE TABLE IF NOT EXISTS BedTypes (
     BedTypeID INT AUTO_INCREMENT PRIMARY KEY,
     BedName VARCHAR(50) NOT NULL UNIQUE
 );
@@ -47,7 +46,7 @@ INSERT INTO BedTypes (BedName) VALUES
 -- =========================
 -- ROOM TYPES
 -- =========================
-CREATE TABLE RoomTypes (
+CREATE TABLE IF NOT EXISTS RoomTypes (
     RoomTypeID INT AUTO_INCREMENT PRIMARY KEY,
     RoomTypeName VARCHAR(100) NOT NULL,
     BasePrice DECIMAL(10,2) NOT NULL,
@@ -61,7 +60,7 @@ CREATE TABLE RoomTypes (
 -- =========================
 -- FLOORS
 -- =========================
-CREATE TABLE Floors (
+CREATE TABLE IF NOT EXISTS Floors (
     FloorID INT AUTO_INCREMENT PRIMARY KEY,
     FloorNumber INT NOT NULL UNIQUE
 );
@@ -69,7 +68,7 @@ CREATE TABLE Floors (
 -- =========================
 -- ROOMS
 -- =========================
-CREATE TABLE Rooms (
+CREATE TABLE IF NOT EXISTS Rooms (
     RoomID INT AUTO_INCREMENT PRIMARY KEY,
     RoomNumber VARCHAR(10) NOT NULL UNIQUE,
     FloorID INT NOT NULL,
@@ -83,7 +82,7 @@ CREATE TABLE Rooms (
 -- =========================
 -- RESERVATION STATUS
 -- =========================
-CREATE TABLE ReservationStatus (
+CREATE TABLE IF NOT EXISTS ReservationStatus (
     StatusID INT AUTO_INCREMENT PRIMARY KEY,
     StatusName VARCHAR(50) UNIQUE
 );
@@ -98,7 +97,7 @@ INSERT INTO ReservationStatus (StatusName) VALUES
 -- =========================
 -- RESERVATIONS
 -- =========================
-CREATE TABLE Reservations (
+CREATE TABLE IF NOT EXISTS Reservations (
     ReservationID INT AUTO_INCREMENT PRIMARY KEY,
     UserID INT NOT NULL,
     StatusID INT NOT NULL,
@@ -116,7 +115,7 @@ CREATE TABLE Reservations (
 -- RESERVED ROOMS
 -- (supports multi-room bookings)
 -- =========================
-CREATE TABLE ReservationRooms (
+CREATE TABLE IF NOT EXISTS ReservationRooms (
     ReservationRoomID INT AUTO_INCREMENT PRIMARY KEY,
     ReservationID INT NOT NULL,
     RoomID INT NOT NULL,
@@ -128,7 +127,7 @@ CREATE TABLE ReservationRooms (
 -- =========================
 -- PAYMENT METHODS
 -- =========================
-CREATE TABLE PaymentMethods (
+CREATE TABLE IF NOT EXISTS PaymentMethods (
     MethodID INT AUTO_INCREMENT PRIMARY KEY,
     MethodName VARCHAR(50) UNIQUE
 );
@@ -142,7 +141,7 @@ INSERT INTO PaymentMethods (MethodName) VALUES
 -- =========================
 -- PAYMENTS
 -- =========================
-CREATE TABLE Payments (
+CREATE TABLE IF NOT EXISTS Payments (
     PaymentID INT AUTO_INCREMENT PRIMARY KEY,
     ReservationID INT NOT NULL,
     MethodID INT NOT NULL,

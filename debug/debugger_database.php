@@ -11,11 +11,6 @@
     <?php 
     require_once "../connect.php";
 
-    if (isset($_POST['CreateDB'])) {
-        require_once "debug_db.php";
-        echo "Database Created";
-    }
-
     if (isset($_POST['ResetDB'])) {
         $conn->query("DROP DATABASE IF EXISTS HMS");
         $conn->query("CREATE DATABASE HMS");
@@ -26,9 +21,7 @@
     ?>
 
     <form method="post">
-        <input type="submit" name="CreateDB" value="CreateDB">
         <input type="submit" name="ResetDB" value="ResetDB">
-        <input type="submit" name="ClearDB" value="ClearDB">
     </form>
 </body>
 </html>
