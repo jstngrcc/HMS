@@ -11,7 +11,22 @@ class AuthController {
     }
 
     public function login() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email = trim($_POST['email']);
+            $password = trim($_POST['password']);
 
+            $userModel = new User($GLOBALS['conn']);
+            $user = $userModel->getUserByEmail($email);
+
+            if ($user && password_verify($password, $user->PasswordHash)) {
+                $_SESSION['user_id'] = $user->UserID;
+                $_SESSION['role'] = $user->RoleName;
+                header('Location: /home');
+                exit;
+            } else {
+                echo "Invalid email or password.";
+            }
+        }
     }
 
     public function signup() {
