@@ -9,9 +9,6 @@
     <h1>Database Debugger</h1>
 
     <?php 
-    if ($_SERVER['REMOTE_ADDR'] !== '127.0.0.1') {
-        die("Access denied");
-    }
     require_once "../../config/connect.php";
 
     if (isset($_POST['ResetDB'])) {
