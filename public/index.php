@@ -32,6 +32,10 @@ switch ($uri) {
         $auth->signup();
         break;
 
+    case '/logout':
+        $auth->logout();
+        break;
+
     case '/privacy':
         $pages->privacy();
         break;

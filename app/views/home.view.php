@@ -2,14 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+    <title>Hotel Home</title>
 </head>
 <body>
-    <a href="/login">login</a>
-    <br>
-    <a href="/signup">signup</a>
-    <br>
-    <a href="/reservation">reservation</a>
+
+<h1>Welcome to Our Hotel</h1>
+
+<?php if (isset($_SESSION['logged_in_user_id'])) {
+    echo "<p>Logged in as UserID: " . $_SESSION['logged_in_user_id'] . "</p>";
+} else {
+    echo "<p>Not logged in</p>";
+}
+?>
+
+<?php if (!$_SESSION['logged_in_user_id']) {
+    echo "<a href='/login'>Login</a> | <a href='/signup'>Sign Up</a>";
+} else {
+    echo "<a href='/logout'>Logout</a>";
+}
+?>
+
+
 </body>
+</html>
