@@ -62,7 +62,7 @@ INSERT INTO Users (RoleID, Email, PasswordHash) VALUES
 (2, 'aniagjoseph593@gmail.com', 'password');
 
 INSERT INTO Guests (UserID, FirstName, LastName, PhoneContact) VALUES
-(2, 'Aniag', 'Joseph', '092584577102');
+(2, 'Aniag', 'Joseph', '092-584-5771');
 
 -- INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, NumChildren) VALUES
 -- (1, 2, '2026-04-08', '2026-04-10', 1, 0);
