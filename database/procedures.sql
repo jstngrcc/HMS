@@ -8,6 +8,7 @@ DELIMITER $$
 
 CREATE PROCEDURE CreateGuestUser(
     IN pEmail VARCHAR(150),
+    IN pEmailGuest VARCHAR(150),
     IN pPasswordHash VARCHAR(255),
     IN pFirstName VARCHAR(100),
     IN pLastName VARCHAR(100),
@@ -23,7 +24,7 @@ BEGIN
 
     SET newUserID = LAST_INSERT_ID();
 
-    CALL CreateGuest (newUserID, pFirstName, pLastName, pPhone);
+    CALL CreateGuest (newUserID, pEmailGuest, pFirstName, pLastName, pPhone);
 
     COMMIT;
 
@@ -57,6 +58,7 @@ DELIMITER $$
 
 CREATE PROCEDURE CreateGuest(
     IN pUserID INT,
+    IN pEmail VARCHAR(150),
     IN pFirstName VARCHAR(100),
     IN pLastName VARCHAR(100),
     IN pPhone VARCHAR(20)
@@ -66,9 +68,9 @@ BEGIN
     START TRANSACTION;
 
     INSERT INTO Guests
-    (UserID, FirstName,LastName,PhoneContact)
+    (UserID, Email, FirstName,LastName,PhoneContact)
     VALUES
-    (pUserID, pFirstName,pLastName,pPhone);
+    (pUserID, pEmail, pFirstName,pLastName,pPhone);
 
     COMMIT;
 
@@ -79,6 +81,22 @@ DELIMITER ;
 -- =========================
 -- ROOMS
 -- =========================
+
+DELIMITER $$
+
+CREATE PROCEDURE GetRoomPrice(
+    IN pRoomID INT,
+    OUT pBasePrice DECIMAL(10,2)
+)
+BEGIN
+    SELECT rt.BasePrice
+    INTO pBasePrice
+    FROM Rooms r
+    JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
+    WHERE r.RoomID = pRoomID;
+END$$
+
+DELIMITER ;
 
 DELIMITER $$
 
@@ -161,7 +179,7 @@ BEGIN
     DECLARE reservationID INT;
     DECLARE isAvailable BOOLEAN;
 
-    IF pCheckIn > pCheckOut THEN
+    IF pCheckIn < CURDATE() OR pCheckOut < pCheckIn THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Check-in date must be before or on check-out date';
     END IF;
