@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation</title>
+</head>
+<body>
+    <form method="POST" action="/reservation-submit">
+    
+        <label for="email">Email: </label>
+        <input type="email" name="email" id="email" required><br>
+        <label for="checkin_date">Check-in:</label>
+        <input type="date" id="checkin_date" name="checkin" required><br>
+        <label for="checkout_date">Check-out:</label>
+        <input type="date" id="checkout_date" name="checkout" required><br>
+        <label for="adults">Adults:</label>
+        <input type="number" id="adults" name="adults" min="1" required><br>
+        <label for="children">Children:</label>
+        <input type="number" id="children" name="children" min="0" required><br>
+        <label for="roomID">Room ID:</label>
+        <input type="number" id="roomID" name="roomID" required><br>
+        <label for="payment_method">Payment: </label>
+        <select name="paymentMethod" id="paymentMethod" required>
+            <option value=1>cash</option>
+            <option value=2>credit card</option>
+            <option value=3>debit card</option>
+            <option value=4>online payment</option>
+        </select><br>
+
+        <label for="fname">First Name: </label>
+        <input type="text" id="fname" name="fname" required><br>
+        <label for="lname">Last Name: </label>
+        <input type="text" id="lname" name="lname" required><br>
+        <label for="phone">Phone Contact: </label>
+        <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" name="phone" placeholder="000-000-0000" required><br>
+
+        <button type="submit">Book Room</button><br>
+
+    </form>
+</body>
+</html>
