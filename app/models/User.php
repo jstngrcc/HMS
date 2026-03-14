@@ -21,23 +21,47 @@ class User {
         }
     }
 
-    public function createGuest($firstName, $lastName, $phone) {
+    public function getGuestByEmail($email) {
         $result = $this->conn->execute_query(
-            "CALL CreateGuest(?, ?, ?, ?)",
-            [$firstName, $lastName, $phone]
+            "SELECT * FROM Guests WHERE Email = ?",
+            [$email]
         );
 
         if ($result) {
-            echo "Guest created successfully!";
+            return $result->fetch_object();
         } else {
-            echo "Failed to create guest: " . $this->conn->error;
+            echo "Query failed: " . $this->conn->error;
+            return null;
         }
     }
 
-    public function createGuestUser($email, $password, $firstName, $lastName, $phone) {
+    public function createGuest($email, $firstName, $lastName, $phone) {
+        // TODO: check if a user with the same email already exists in Users or Guests table before creating a new guest
+
+        // Check if guest already exists by email
+        $existingGuest = $this->getGuestByEmail($email);
+        if ($existingGuest) {
+            return $existingGuest->GuestID;
+        }
+
+        // Create new guest if not exists
         $result = $this->conn->execute_query(
-            "CALL CreateGuestUser(?, ?, ?, ?, ?)",
-            [$email, $password, $firstName, $lastName, $phone]
+            "CALL CreateGuest(?, ?, ?, ?, ?)",
+            [NULL, $email, $firstName, $lastName, $phone]
+        );
+
+        if ($result) {
+            // Return the new GuestID
+            return $this->conn->insert_id;
+        } else {
+            throw new Exception("Failed to create guest: " . $this->conn->error);
+        }
+    }
+
+    public function createGuestUser($email, $emailGuest, $password, $firstName, $lastName, $phone) {
+        $result = $this->conn->execute_query(
+            "CALL CreateGuestUser(?, ?, ?, ?, ?, ?)",
+            [$email, $emailGuest, $password, $firstName, $lastName, $phone]
         );
 
         if ($result) {
