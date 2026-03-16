@@ -59,6 +59,7 @@ class ReservationController {
             }
 
             $totalAmount = $roomModel->calculateTotalAmount(
+                $roomModel->getRoomTypeName($roomID),
                 $roomModel->getRoomPrice($roomID),
                 $checkin,
                 $checkout,

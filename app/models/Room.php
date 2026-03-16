@@ -24,36 +24,50 @@ class Room {
         return (float)$row['price'];
     }
 
-    // TODO: redo formula
-    function calculateTotalAmount($basePrice, $checkin, $checkout, $numAdults = 1, $numChildren = 0) {
+    function calculateTotalAmount($roomTypeName, $basePrice, $checkin, $checkout, $numAdults = 1, $numChildren = 0) {
         // 1. Calculate number of nights
         $checkinDate = new DateTime($checkin);
         $checkoutDate = new DateTime($checkout);
 
-        // // Ensure checkout is after checkin
-        if ($checkoutDate <= $checkinDate) {
+        if ($checkoutDate < $checkinDate) {
             throw new Exception("Check-out date must be after check-in date.");
         }
 
         $interval = $checkinDate->diff($checkoutDate);
         $numNights = $interval->days;
 
-        // // 2. Define additional charges (optional)
-        $extraAdultRate = 0.2;    // 20% extra per adult above 1
-        $extraChildRate = 0.1;    // 10% extra per child
+        if ($numNights == 0) {
+            $numNights = 1; // Minimum charge for 1 night
+        }
 
-        $adultMultiplier = 1 + ($numAdults > 1 ? ($numAdults - 1) * $extraAdultRate : 0);
-        $childMultiplier = $numChildren * $extraChildRate;
+        $totalAmount = $basePrice * $numNights;
 
-        $totalMultiplier = $adultMultiplier + $childMultiplier;
+        // 3. Discount for > 3 nights
+        if ($numNights > 3) {
+            $totalAmount *= 0.85; // Apply 15% discount
 
-        // // 3. Calculate total
-        $totalAmount = $basePrice * $numNights * $totalMultiplier;
+            // 4. Additional guest charge
+            // Determine minimum occupancy based on room type
+            $occupancy = 1; // default single occupancy
+            if (stripos($roomTypeName, 'Double') !== false) {
+                $occupancy = 2; // minimum 2 guests for double rooms
+            }
+
+            // Total guests
+            $totalGuests = max($numAdults + $numChildren, $occupancy);
+
+            // Extra charge = 10% of room rate per guest × number of nights
+            $extraCharge = $basePrice * 0.10 * $totalGuests * $numNights;
+            $totalAmount += $extraCharge;
+        }
+
+        // 5. Apply VAT (12%)
+        $totalAmount *= 1.12;
 
         return round($totalAmount, 2);
     }
 
-    function getRoomName($roomID) {
+    function getRoomTypeName($roomID) {
         $this->conn->execute_query("CALL GetRoomName(?, @name)", [$roomID]);
         
         $result = $this->conn->query("SELECT @name AS name;");
