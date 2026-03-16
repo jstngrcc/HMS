@@ -85,6 +85,17 @@ class User {
             return false;
         }
     }
+
+    public function updatePasswordByID($userID, $newPassword) {
+        $result = $this->conn->execute_query(
+            "UPDATE Users SET PasswordHash = ? WHERE UserID = ?",
+            [$newPassword, $userID]
+        );
+
+        if (!$result) {
+            throw new Exception("Failed to update password: " . $this->conn->error);
+        }
+    }
 }
 
 ?>
