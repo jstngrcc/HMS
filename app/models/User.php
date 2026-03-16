@@ -37,7 +37,7 @@ class User {
 
     public function createGuest($email, $firstName, $lastName, $phone) {
         // Check if user already exists by email
-        $result = getUserbyEmail($email);
+        $result = $this->getUserByEmail($email);
 
         // If user exists, get the UserID, otherwise set to NULL
         if ($result) {
