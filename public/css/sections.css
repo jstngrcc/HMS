@@ -18,12 +18,38 @@
 
 /* Individual section backgrounds */
 .section1 {
-  background-image: url('../images/homebgenhanced.jpg');
-   background-size: cover;     
+  position: relative; /* Needed for the pseudo-element to position correctly */
+  background-image: url('/images/homebg.jpg');
+  background-size: cover;     
   background-position: center;   
   background-repeat: no-repeat; 
 }
 
+.section1::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 160px; /* Adjust height as needed */
+  background: rgba(0, 0, 0, 0.5); /* Black with 50% transparency */
+}
+
+/* Flex container that sits on top of the black bar */
+.section1 .bottom-flex {
+  position: absolute;
+  bottom: 16px; /* Move up by 20px from the bottom */
+  left: 0;
+  width: 100%;
+  /* allow height to grow */
+  height: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  color: white;
+  padding: 0 550px;
+  z-index: 1;
+}
 
 .section2 {
   background-image: url('');
@@ -65,14 +91,3 @@ hr {
   outline: none;
 
 }
-
-.divider{
-  border: none;
-  background: linear-gradient(to right, #0d0d0d, #b0b0b0);
-  height: 50px;
-  margin: 0;
-
-  box-shadow: 0 4px 12px rgba(0,0,0,1);
-}
-
-
