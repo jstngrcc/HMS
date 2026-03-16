@@ -36,7 +36,15 @@ class User {
     }
 
     public function createGuest($email, $firstName, $lastName, $phone) {
-        // TODO: check if a user with the same email already exists in Users or Guests table before creating a new guest
+        // Check if user already exists by email
+        $result = getUserbyEmail($email);
+
+        // If user exists, get the UserID, otherwise set to NULL
+        if ($result) {
+            $userID = $result->user_id;
+        } else {
+            $userID = NULL;
+        }
 
         // Check if guest already exists by email
         $existingGuest = $this->getGuestByEmail($email);
@@ -47,7 +55,7 @@ class User {
         // Create new guest if not exists
         $result = $this->conn->execute_query(
             "CALL CreateGuest(?, ?, ?, ?, ?)",
-            [NULL, $email, $firstName, $lastName, $phone]
+            [$userID, $email, $firstName, $lastName, $phone]
         );
 
         if ($result) {
