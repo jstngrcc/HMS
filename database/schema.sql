@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS Users (
     FOREIGN KEY (RoleID) REFERENCES Roles(RoleID)
 );
 
-CREATE TABLE Guests (
+CREATE TABLE IF NOT EXISTS Guests (
     GuestID INT AUTO_INCREMENT PRIMARY KEY,
     UserID INT NULL UNIQUE,
     Email VARCHAR(150) NOT NULL UNIQUE,
@@ -34,6 +34,15 @@ CREATE TABLE Guests (
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
+CREATE TABLE IF NOT EXISTS PasswordResets (
+    ResetID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT NOT NULL,
+    Token VARCHAR(255) NOT NULL,
+    ExpiresAt DATETIME NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
 -- =========================
 -- BED TYPES
 -- =========================
@@ -148,3 +157,6 @@ ON Reservations(CheckInDate, CheckOutDate);
 
 CREATE INDEX idx_room_type
 ON Rooms(RoomTypeID);
+
+-- TODO: Add tokens to Users
+-- TODO: Add descriptions and specific times to rooms
