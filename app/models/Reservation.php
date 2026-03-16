@@ -46,8 +46,21 @@ class Reservation {
         }
     }
 
-    // TODO: implement add extras to reservation
-    public function addReservationExtras($reservationID, $extraID, $quantity) {
+    public function addRoomToReservation($reservationID, $roomID) {
+        try {
+            $result = $this->conn->execute_query(
+                "CALL AddRoomToReservation(?, ?)",
+                [$reservationID, $roomID]
+            );
+
+            if ($result) {
+                echo "Room added to reservation successfully.";
+            } else {
+                throw new Exception("Failed to add room to reservation: " . $this->conn->error);
+            }
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
     }
 }
 ?>
