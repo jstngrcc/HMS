@@ -54,6 +54,10 @@ switch ($uri) {
         $reservation->submit();
         break;
 
+    case '/reset-password':
+        $auth->resetPasswordForm();
+        break;
+
     default:
         http_response_code(404);
         echo "404 Not Found";
