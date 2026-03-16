@@ -18,6 +18,10 @@ switch ($uri) {
         require_once '../app/views/home.view.php';
         break;
 
+    case '/frontend-home':
+        require_once '../app/views/frontend-home.view.html';
+        break;
+
     case '/login':
         $auth->loginForm();
         break;
