@@ -28,5 +28,26 @@ class Reservation {
             return null;
         }
     }
+
+    public function cancelReservation($reservationID) {
+        try {
+            $result = $this->conn->execute_query(
+                "CALL CancelReservation(?)",
+                [$reservationID]
+            );
+
+            if ($result) {
+                echo "Reservation cancelled successfully.";
+            } else {
+                throw new Exception("Failed to cancel reservation: " . $this->conn->error);
+            }
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
+    }
+
+    // TODO: implement add extras to reservation
+    public function addReservationExtras($reservationID, $extraID, $quantity) {
+    }
 }
 ?>
