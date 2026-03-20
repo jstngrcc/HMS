@@ -14,6 +14,9 @@ $reservation = new ReservationController();
 
 switch ($uri) {
     case '/':
+        require_once '../app/views/home.view.html';
+        break;
+
     case '/home':
         require_once '../app/views/home.view.html';
         break;
