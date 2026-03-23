@@ -274,9 +274,12 @@
               <p class="text-white text-sm font-light font-roboto [text-shadow:0px_1px_1px_rgb(0_0_0/0.25)]">
                 A comfortable and cozy room designed for guests seeking a simple yet relaxing stay, complete with
                 essential amenities.</p>
-              <button class="self-start text-stone-800 border border-current px-2 py-1 rounded font-normal font-roboto">
-                Book Now
-              </button>
+              <a href="/standard">
+                <button class="self-start text-stone-800 border border-current px-2 py-1 rounded font-normal font-roboto
+               transition transform hover:bg-stone-200 hover:text-stone-900 hover:scale-105 hover:shadow-md">
+                  Book Now
+                </button>
+              </a>
             </div>
           </div>
         </div>
@@ -294,9 +297,12 @@
                 Enjoy extra space and enhanced comfort in our deluxe rooms, featuring stylish interiors and upgraded
                 amenities.
               </p>
-              <button class="self-start text-stone-800 border border-current px-2 py-1 rounded font-normal font-roboto">
-                Book Now
-              </button>
+              <a href="/deluxe">
+                <button class="self-start text-stone-800 border border-current px-2 py-1 rounded font-normal font-roboto
+               transition transform hover:bg-stone-200 hover:text-stone-900 hover:scale-105 hover:shadow-md">
+                  Book Now
+                </button>
+              </a>
             </div>
           </div>
         </div>
@@ -315,9 +321,12 @@
                 the
                 perfect space to unwind.
               </p>
-              <button class="self-start text-stone-800 border border-current px-2 py-1 rounded font-normal font-roboto">
-                Book Now
-              </button>
+              <a href="/suite">
+                <button class="self-start text-stone-800 border border-current px-2 py-1 rounded font-normal font-roboto
+               transition transform hover:bg-stone-200 hover:text-stone-900 hover:scale-105 hover:shadow-md">
+                  Book Now
+                </button>
+              </a>
             </div>
           </div>
         </div>
