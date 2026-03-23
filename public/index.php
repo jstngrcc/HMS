@@ -14,11 +14,11 @@ $reservation = new ReservationController();
 
 switch ($uri) {
     case '/':
-        require_once '../app/views/home.view.html';
+        $pages->home();
         break;
 
     case '/home':
-        require_once '../app/views/home.view.html';
+        $pages->home();
         break;
 
     case '/login':
@@ -27,6 +27,14 @@ switch ($uri) {
 
     case '/signup':
         $auth->signupForm();
+        break;
+
+    case '/forgot-password':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $auth->resetPasswordForm(); // handles sending reset email
+        } else {
+            $auth->forgotPasswordForm(); // shows the form
+        }
         break;
 
     case '/login-submit':
@@ -52,17 +60,36 @@ switch ($uri) {
     case '/reservation':
         $reservation->reservation();
         break;
-    
+
     case '/reservation-submit':
         $reservation->submit();
         break;
 
-    case '/reset-password':
-        $auth->resetPasswordForm();
+    case '/password-reset':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $auth->resetPassword(); // update password in DB
+        } else {
+            $auth->showResetForm($_GET['token'] ?? null); // show form with token
+        }
+        break;
+
+    case '/search':
+        $pages->search();
+        break;
+
+    case '/standard':
+        $pages->standard();
+        break;
+
+    case '/deluxe':
+        $pages->deluxe();
+        break;
+
+    case '/suite':
+        $pages->suite();
         break;
 
     default:
-        http_response_code(404);
-        echo "404 Not Found";
+        $pages->notFound();
         break;
 }

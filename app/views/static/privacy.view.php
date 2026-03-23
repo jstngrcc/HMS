@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/output.css">
+</head>
+
+<body>
+
+    <?php require_once __DIR__ . '/../components/header.view.php'; ?>
+
+    <div class="p-10 flex flex-col gap-5">
+
+        <h1 class="font-crimson font-bold text-3xl">PRIVACY POLICY</h1>
+
+        <div class="mx-auto h-1 w-full bg-yellow-900/60 rounded-lg"></div>
+
+        <p class="mt-4 text-gray-700 font-poppins">
+            Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your personal
+            information.
+        </p>
+
+        <h2 class="font-bold mt-4">1. Information We Collect</h2>
+        <p class="text-gray-700 font-poppins">
+            We may collect personal information such as your name, email address, phone number, and payment information
+            when you use our services.
+        </p>
+
+        <h2 class="font-bold mt-4">2. How We Use Your Information</h2>
+        <p class="text-gray-700 font-poppins">
+            Your information is used to provide and improve our services, communicate with you, and for security
+            purposes.
+        </p>
+
+        <h2 class="font-bold mt-4">3. Data Protection</h2>
+        <p class="text-gray-700 font-poppins">
+            We take reasonable measures to protect your personal data. However, we cannot guarantee absolute security.
+        </p>
+
+        <h2 class="font-bold mt-4">4. Third-Party Services</h2>
+        <p class="text-gray-700 font-poppins">
+            We may share information with trusted third parties to provide services or comply with legal obligations.
+        </p>
+
+        <h2 class="font-bold mt-4">5. Changes to This Policy</h2>
+        <p class="text-gray-700 font-poppins">
+            We may update this Privacy Policy from time to time. Changes will be posted on this page.
+        </p>
+
+        <p class="mt-4 text-gray-700 font-poppins">
+            If you have any questions, please contact us at <a href="mailto:subic.rivera@hotelsubic.com"
+                class="underline hover:text-gray-800">support@example.com</a>.
+        </p>
+
+        <a href="/signup">
+            <button class="rounded-sm hover:bg-[#3F321F] shadow-2xl py-2 px-4 bg-[#C39C4D] transition-colors">
+                <p
+                    class="transition-all duration-300 text-white hover:text-white hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
+                    BACK
+                </p>
+            </button>
+        </a>
+
+    </div>
+
+</body>
+
+</html>

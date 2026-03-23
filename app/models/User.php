@@ -1,15 +1,22 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-class User {
+require __DIR__ . '/../../vendor/autoload.php'; // Adjust path to your vendor/autoload.php
+
+class User
+{
     private $conn;
 
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->conn = $db;
     }
 
-    public function getUserByEmail($email) {
+    public function getUserByEmail($email)
+    {
         $result = $this->conn->execute_query(
-            "SELECT * FROM Users WHERE Email = ?",
+            "SELECT u.*, g.FirstName, g.LastName FROM Users u JOIN Guests g ON u.GuestID = g.GuestID WHERE u.Email = ?",
             [$email]
         );
 
@@ -21,7 +28,8 @@ class User {
         }
     }
 
-    public function getGuestByEmail($email) {
+    public function getGuestByEmail($email)
+    {
         $result = $this->conn->execute_query(
             "SELECT * FROM Guests WHERE Email = ?",
             [$email]
@@ -35,51 +43,39 @@ class User {
         }
     }
 
-    public function createGuest($email, $firstName, $lastName, $phone) {
-        // Check if user already exists by email
-        $result = $this->getUserByEmail($email);
-
-        // If user exists, get the UserID, otherwise set to NULL
-        if ($result) {
-            $userID = $result->user_id;
-        } else {
-            $userID = NULL;
-        }
-
-        // Check if guest already exists by email
+    public function createGuest($email, $firstName, $lastName, $phone)
+    {
+        // Check if guest already exists
         $existingGuest = $this->getGuestByEmail($email);
         if ($existingGuest) {
             return $existingGuest->GuestID;
         }
 
-        // Create new guest if not exists
-        $result = $this->conn->execute_query(
-            "CALL CreateGuest(?, ?, ?, ?, ?)",
-            [$userID, $email, $firstName, $lastName, $phone]
+        // Create new guest
+        $this->conn->execute_query(
+            "CALL CreateGuest(?, ?, ?, ?)",
+            [$email, $firstName, $lastName, $phone]
         );
 
-        if ($result) {
-            // Return the new GuestID
-            return $this->conn->insert_id;
-        } else {
-            throw new Exception("Failed to create guest: " . $this->conn->error);
-        }
+        return $this->conn->insert_id;
     }
 
-    public function createGuestUser($email, $emailGuest, $password, $firstName, $lastName, $phone) {
+    public function createGuestUser($email, $emailGuest, $password, $firstName, $lastName, $phone)
+    {
         $result = $this->conn->execute_query(
             "CALL CreateGuestUser(?, ?, ?, ?, ?, ?)",
             [$email, $emailGuest, $password, $firstName, $lastName, $phone]
         );
 
-        if ($result) {
-            echo "Guest created successfully!";
-        } else {
-            echo "Failed to create guest: " . $this->conn->error;
+        if (!$result) {
+            throw new Exception("Failed to create user: " . $this->conn->error);
         }
+
+        return true;
     }
 
-    public function updatePassword($email, $newPassword) {
+    public function updatePassword($email, $newPassword)
+    {
         $result = $this->conn->execute_query(
             "UPDATE Users SET PasswordHash = ? WHERE Email = ?",
             [$newPassword, $email]
@@ -94,7 +90,8 @@ class User {
         }
     }
 
-    public function updatePasswordByID($userID, $newPassword) {
+    public function updatePasswordByID($userID, $newPassword)
+    {
         $result = $this->conn->execute_query(
             "UPDATE Users SET PasswordHash = ? WHERE UserID = ?",
             [$newPassword, $userID]
@@ -103,6 +100,77 @@ class User {
         if (!$result) {
             throw new Exception("Failed to update password: " . $this->conn->error);
         }
+    }
+
+    public function createPasswordResetToken($userID)
+    {
+        $token = bin2hex(random_bytes(16)); // secure token
+        $expires = date('Y-m-d H:i:s', strtotime('+30 minutes'));
+
+        $result = $this->conn->execute_query(
+            "INSERT INTO PasswordResets (UserID, Token, ExpiresAt) VALUES (?, ?, ?)",
+            [$userID, $token, $expires]
+        );
+
+        if (!$result) {
+            throw new Exception("Failed to create password reset token: " . $this->conn->error);
+        }
+
+        return $token; // return the token so controller can send email
+    }
+
+    public function sendPasswordResetEmail($toEmail, $token)
+    {
+        $mail = new PHPMailer(true);
+
+        try {
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'windows105934@gmail.com';       // Your Gmail
+            $mail->Password = 'vrwk plph mpxl bjkq';     // Your Gmail App Password
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = 587;
+
+            $mail->setFrom('windows105934@gmail.com', 'HMS Project');
+            $mail->addAddress($toEmail);
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Password Reset Request';
+            $resetLink = "http://hms.local/password-reset?token=$token";
+            $mail->Body = "Click this link to reset your password (valid 30 min): <a href='$resetLink'>$resetLink</a>";
+            $mail->AltBody = "Click this link to reset your password (valid 30 min): $resetLink";
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            // log or display error
+            error_log("Mailer Error: {$mail->ErrorInfo}");
+            return false;
+        }
+    }
+    public function getUserByResetToken($token)
+    {
+        $now = date('Y-m-d H:i:s');
+        $result = $this->conn->execute_query(
+            "SELECT u.* FROM Users u
+         JOIN PasswordResets p ON u.UserID = p.UserID
+         WHERE p.Token = ? AND p.ExpiresAt > ?",
+            [$token, $now]
+        );
+
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_object();
+        }
+        return null;
+    }
+
+    public function deleteResetToken($token)
+    {
+        $this->conn->execute_query(
+            "DELETE FROM PasswordResets WHERE Token = ?",
+            [$token]
+        );
     }
 }
 

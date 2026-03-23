@@ -26,8 +26,11 @@ INSERT INTO PaymentMethods (MethodName) VALUES
 -- =========================
 -- Admin User
 -- =========================
-INSERT INTO Users (RoleID, Email, PasswordHash) VALUES
-(1, 'admin@hotel.com', 'password');
+INSERT INTO Guests (Email, FirstName, LastName, PhoneContact) VALUES 
+('admin@hotel.com', 'Admin', 'Admin', '000-000-0000');
+
+INSERT INTO Users (GuestID, RoleID, Email, PasswordHash) VALUES
+(1, 1, 'admin@hotel.com', '$2y$10$44eM8DEp1PQZAU1cpOwtGu1HBFrDOXXR4XfjXbBCoBS6iZNk2bwQ2');
 
 -- =========================
 -- Hotel Layout
@@ -58,11 +61,11 @@ INSERT INTO Rooms (RoomNumber, FloorID, RoomTypeID) VALUES
 -- =========================
 -- Test Reservation
 -- =========================
-INSERT INTO Users (RoleID, Email, PasswordHash) VALUES
-(2, 'aniagjoseph593@gmail.com', 'password');
+-- INSERT INTO Guests (Email, FirstName, LastName, PhoneContact) VALUES 
+-- ('aniagjoseph593@gmail.com', 'Joseph', 'Aniag', '092-584-5771');
 
-INSERT INTO Guests (UserID, Email, FirstName, LastName, PhoneContact) VALUES
-(2, 'jeiya5934@proton.me', 'Aniag', 'Joseph', '092-584-5771');
+-- INSERT INTO Users (GuestID, RoleID, Email, PasswordHash) VALUES
+-- (2, 2, 'aniagjoseph593@gmail.com', '$2y$10$44eM8DEp1PQZAU1cpOwtGu1HBFrDOXXR4XfjXbBCoBS6iZNk2bwQ2');
 
 -- INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, NumChildren) VALUES
 -- (1, 2, '2026-04-08', '2026-04-10', 1, 0);

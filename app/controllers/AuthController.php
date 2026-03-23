@@ -1,16 +1,36 @@
 <?php
 require_once '../app/models/User.php';
 
-class AuthController {
-    public function loginForm() {
-        require_once '../app/views/auth/login.view.html';
+class AuthController
+{
+    public function loginForm()
+    {
+        require_once '../app/views/auth/auth.view.php';
     }
 
-    public function signupForm() {
-        require_once '../app/views/auth/signup.view.html';
+    public function signupForm()
+    {
+        require_once '../app/views/auth/auth.view.php';
     }
 
-    public function login() {
+    public function forgotPasswordForm()
+    {
+        require_once '../app/views/auth/forgot_password.view.php';
+    }
+
+    public function showResetForm($token = null)
+    {
+        if (!$token) {
+            echo "Invalid or missing token.";
+            return;
+        }
+        // You could also check if token exists in DB and is not expired here
+
+        require_once '../app/views/auth/reset_password.view.php';
+    }
+
+    public function login()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = trim($_POST['email']);
             $password = trim($_POST['password']);
@@ -25,6 +45,8 @@ class AuthController {
 
             if ($user && password_verify($password, $user->PasswordHash)) {
                 $_SESSION['logged_in_user_id'] = $user->UserID;
+                $_SESSION['logged_in_user_name'] = $user->FirstName;
+
                 header('Location: /home');
                 exit;
             } else {
@@ -33,7 +55,8 @@ class AuthController {
         }
     }
 
-    public function signup() {
+    public function signup()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fname = trim($_POST['fname']);
             $lname = trim($_POST['lname']);
@@ -41,7 +64,7 @@ class AuthController {
             $email = trim($_POST['email']);
             $password = trim($_POST['password']);
             $passwordr = trim($_POST['passwordr']);
-            
+
             if (empty($fname) || empty($lname) || empty($email) || empty($password) || empty($passwordr)) {
                 echo "Please fill in all fields.";
                 return;
@@ -52,98 +75,118 @@ class AuthController {
                 return;
             }
 
-            if (strlen($password) < 8) {
-                echo "Password must be at least 8 characters long.";
-                return;
-            }
-    
-            if (!preg_match('/[A-Z]/', $password)) {
-                echo "Password must contain at least one uppercase letter.";
-                return;
-            }
-    
-            if (!preg_match('/[a-z]/', $password)) {
-                echo "Password must contain at least one lowercase letter.";
-                return;
-            }
-    
-            if (!preg_match('/[0-9]/', $password)) {
-                echo "Password must contain at least one number.";
-                return;
-            }
-    
-            if (!preg_match('/[\W]/', $password)) {
-                echo "Password must contain at least one special character.";
-                return;
-            }
-            
             $hash = password_hash($password, PASSWORD_DEFAULT);
 
             $userModel = new User($GLOBALS['conn']);
 
-            $userModel->createGuestUSER($email, $hash, $fname, $lname, $phone);
+            try {
+                $userModel->createGuestUser(
+                    $email,
+                    $email,
+                    $hash,
+                    $fname,
+                    $lname,
+                    $phone
+                );
 
-            header('Location: /login');
-            exit;
+                $_POST['email'] = $email;
+                $_POST['password'] = $password;
+                $this->login();
+
+                header('Location: /home');
+                exit;
+
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
         }
     }
-    public function logout() {
+    public function logout()
+    {
         session_destroy();
         header('Location: /home');
         exit;
     }
-    public function forgotPassword() {
-        if($_SERVER['REQUEST_METHOD'] === 'POST'){
+
+
+    public function resetPasswordForm()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email = $_POST['email'];
+
+            // Check if user exists
+            $userModel = new User($GLOBALS['conn']);
+            $user = $userModel->getUserByEmail($email);
+
+            if ($user) {
+                $token = $userModel->createPasswordResetToken($user->UserID);
+
+                $userModel->sendPasswordResetEmail($user->Email, $token);
+
+                header('Location: /login');
+                exit;
+            } else {
+                echo "Email not found in our system.";
+            }
+        }
+    }
+    public function sendResetLinkk()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = $_POST['email'];
 
             $userModel = new User($GLOBALS['conn']);
             $user = $userModel->getUserByEmail($email);
 
-            if($user) {
-                header("Location: reset-password?email=".$email);
-                exit();
+            if ($user) {
+                $token = $userModel->createPasswordResetToken($user['UserID']);
+                if ($userModel->sendPasswordResetEmail($user['Email'], $token)) {
+                    echo "Recovery link sent!";
+                } else {
+                    echo "Failed to send email.";
+                }
             } else {
-                echo "Email not found";
+                echo "Email not found in our system.";
             }
         }
     }
-    public function resetPassword() {
-        $email = $_GET['email'];
+    public function resetPassword()
+    {
+        $token = $_GET['token'] ?? null;
 
-        if($_SERVER['REQUEST_METHOD'] === 'POST'){
+        if (!$token) {
+            echo "Missing token.";
+            return;
+        }
+
+        $userModel = new User($GLOBALS['conn']);
+        $user = $userModel->getUserByResetToken($token);
+
+        if (!$user) {
+            echo "Invalid or expired token.";
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newPassword = trim($_POST['password']);
 
-            if (strlen($newPassword) < 8) {
-                echo "Password must be at least 8 characters long.";
-                return;
-            }
-    
-            if (!preg_match('/[A-Z]/', $newPassword)) {
-                echo "Password must contain at least one uppercase letter.";
-                return;
-            }
-    
-            if (!preg_match('/[a-z]/', $newPassword)) {
-                echo "Password must contain at least one lowercase letter.";
-                return;
-            }
-    
-            if (!preg_match('/[0-9]/', $newPassword)) {
-                echo "Password must contain at least one number.";
-                return;
-            }
-    
-            if (!preg_match('/[\W]/', $newPassword)) {
-                echo "Password must contain at least one special character.";
+            // password validation
+            if (
+                strlen($newPassword) < 8
+                || !preg_match('/[A-Z]/', $newPassword)
+                || !preg_match('/[a-z]/', $newPassword)
+                || !preg_match('/[0-9]/', $newPassword)
+                || !preg_match('/[\W]/', $newPassword)
+            ) {
+                echo "Password must be at least 8 chars, include upper/lowercase, number, and special char.";
                 return;
             }
 
             $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $userModel->updatePasswordByID($user->UserID, $hash);
+            $userModel->deleteResetToken($token); // invalidate token
 
-            $userModel = new User($GLOBALS['conn']);
-            $userModel->updatePassword($email, $hash);
-
-            echo "Password updated successfully";
+            echo "Password updated successfully!";
             header('Location: /login');
             exit;
         }

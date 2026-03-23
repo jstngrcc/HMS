@@ -12,8 +12,6 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
-
 </head>
 
 <body>
@@ -57,19 +55,7 @@
         Contact us
       </span>
     </a>
-    <a href="/Profile" class="relative group">
-      <span
-        class="after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-500 group-hover:after:w-full">
-        Profile
-      </span>
-    </a>
-
-    <button class="rounded-sm bg-[#3F321F] shadow-2xl pt-2 pb-2 pr-4 pl-4 transition-colors">
-      <p class="transition-all duration-300 hover:text-white hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
-        Sign In
-      </p>
-    </button>
-
+    <?php require_once __DIR__ . '/components/profile.view.php'; ?>
     <a href="#">
       <img src="/assets/icons/cart.svg" alt="Cart icon"
         class="transition-all duration-200 rounded hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.9)] hover:scale-105">
@@ -90,16 +76,27 @@
 
     <!-- TODO: Add rooms button -->
     <footer class="bg-[rgba(0,0,0,0.40)] flex justify-center p-10 gap-8 items-center">
-      <input type="text" name="checkin" id="dateRange" placeholder="Check-in — Check-out"
+      <input type="text" name="checkin" id="dateRange" placeholder="Check-In — Check-Out"
         class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
-      <button
-        class="text-stone-600 font-roboto font-semibold text-[16px] font-medium leading-normal rounded-sm bg-[#EEE2CB] p-3">
+      <button id="openRooms"
+        class="text-stone-600 font-roboto font-semibold text-[16px] leading-normal rounded-sm bg-[#EEE2CB] p-3">
         ROOMS
       </button>
       <button class="text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3">
         SEARCH ROOMS
       </button>
     </footer>
+
+    <!-- Hidden Rooms -->
+    <div class="fixed flex inset-0 bg-[rgba(0,0,0,0.7)] items-center justify-center hidden z-50" id="RoomsPopup">
+      <div class="flex flex-col p-10 bg-[#EEE2CB] rounded-2xl">
+        <h1 class="text-center justify-start text-yellow-900 text-lg font-normal font-crimson">Room
+          Selection</h1>
+        <button id="closeRooms" class="mt-4 px-4 py-2 bg-yellow-900 text-white rounded font-crimson">
+          Button
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Facilities -->
@@ -314,7 +311,8 @@
                 <p class="w-56 text-yellow-100 text-xl font-crimson font-normal">from ₱ 3,000.00 / per night</p>
               </div>
               <p class="text-white text-sm font-light font-roboto [text-shadow:0px_1px_1px_rgb(0_0_0/0.25)]">
-                Experience luxury and spacious living in our suites, offering elegant design, premium amenities, and the
+                Experience luxury and spacious living in our suites, offering elegant design, premium amenities, and
+                the
                 perfect space to unwind.
               </p>
               <button class="self-start text-stone-800 border border-current px-2 py-1 rounded font-normal font-roboto">
@@ -444,16 +442,24 @@
 
   <script src="/js/testimonials.js"></script>
   <script src="/js/gallery.js"></script>
+  <script src="/js/daterange.js"></script>
   <script>
-    flatpickr("#dateRange", {
-      mode: "range",
-      dateFormat: "d/m/Y",
-      allowInput: true,
-      minDate: "today",
-      onChange: function (selectedDates, dateStr, instance) {
-        if (selectedDates.length === 1) {
-            instance.set("minDate", selectedDates[0]);
-        } 
+    const openBtn = document.getElementById("openRooms");
+    const closeBtn = document.getElementById("closeRooms");
+    const modal = document.getElementById("RoomsPopup");
+
+    openBtn.addEventListener("click", () => {
+      modal.classList.remove("hidden"); // show modal
+    });
+
+    closeBtn.addEventListener("click", () => {
+      modal.classList.add("hidden"); // hide modal
+    });
+
+    // Optional: close when clicking outside the modal
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
       }
     });
   </script>

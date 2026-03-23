@@ -7,7 +7,7 @@ USE HMS;
 DELIMITER $$
 
 CREATE PROCEDURE CreateGuestUser(
-    IN pEmail VARCHAR(150),
+    IN pEmailUser VARCHAR(150),
     IN pEmailGuest VARCHAR(150),
     IN pPasswordHash VARCHAR(255),
     IN pFirstName VARCHAR(100),
@@ -16,15 +16,23 @@ CREATE PROCEDURE CreateGuestUser(
 )
 BEGIN
 
-    DECLARE newUserID INT;
+    DECLARE newGuestID INT;
 
     START TRANSACTION;
 
-    CALL CreateUser (pEmail, pPasswordHash, 2);
+    -- Step 1: Create Guest FIRST
+    INSERT INTO Guests
+    (Email, FirstName, LastName, PhoneContact)
+    VALUES
+    (pEmailGuest, pFirstName, pLastName, pPhone);
 
-    SET newUserID = LAST_INSERT_ID();
+    SET newGuestID = LAST_INSERT_ID();
 
-    CALL CreateGuest (newUserID, pEmailGuest, pFirstName, pLastName, pPhone);
+    -- Step 2: Create User linked to Guest
+    INSERT INTO Users
+    (GuestID, RoleID, Email, PasswordHash)
+    VALUES
+    (newGuestID, 2, pEmailUser, pPasswordHash);
 
     COMMIT;
 
@@ -32,23 +40,22 @@ END$$
 
 DELIMITER ;
 
+DELIMITER ;
+
 DELIMITER $$
 
 CREATE PROCEDURE CreateUser(
+    IN pGuestID INT,
     IN pRoleID INT,
     IN pEmail VARCHAR(150),
     IN pPasswordHash VARCHAR(255)
 )
 BEGIN
 
-    START TRANSACTION;
-
     INSERT INTO Users
-    (RoleID,Email,PasswordHash)
+    (GuestID, RoleID, Email, PasswordHash)
     VALUES
-    (pRoleID,pEmail,pPasswordHash);
-
-    COMMIT;
+    (pGuestID, pRoleID, pEmail, pPasswordHash);
 
 END$$
 
@@ -57,7 +64,6 @@ DELIMITER ;
 DELIMITER $$
 
 CREATE PROCEDURE CreateGuest(
-    IN pUserID INT,
     IN pEmail VARCHAR(150),
     IN pFirstName VARCHAR(100),
     IN pLastName VARCHAR(100),
@@ -65,14 +71,10 @@ CREATE PROCEDURE CreateGuest(
 )
 BEGIN
 
-    START TRANSACTION;
-
     INSERT INTO Guests
-    (UserID, Email, FirstName,LastName,PhoneContact)
+    (Email, FirstName, LastName, PhoneContact)
     VALUES
-    (pUserID, pEmail, pFirstName,pLastName,pPhone);
-
-    COMMIT;
+    (pEmail, pFirstName, pLastName, pPhone);
 
 END$$
 
