@@ -56,6 +56,7 @@
       </span>
     </a>
     <?php require_once __DIR__ . '/components/profile.view.php'; ?>
+    <!-- TODO: Add carts -->
     <a href="#">
       <img src="/assets/icons/cart.svg" alt="Cart icon"
         class="transition-all duration-200 rounded hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.9)] hover:scale-105">
@@ -82,6 +83,7 @@
         class="text-stone-600 font-roboto font-semibold text-[16px] leading-normal rounded-sm bg-[#EEE2CB] p-3">
         ROOMS
       </button>
+      <!-- TODO: Add search button -->
       <button class="text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3">
         SEARCH ROOMS
       </button>
@@ -290,6 +292,7 @@
             <div class="flex flex-col gap-1">
               <div class="flex justify-between">
 
+                <!-- TODO: Add deluxe -->
                 <h1 class="text-stone-800 text-md font-crimson font-normal">Deluxe</h1>
                 <p class="w-56 text-yellow-100 text-xl font-crimson font-normal">from ₱ 2,300.00 / per night</p>
               </div>
@@ -313,6 +316,7 @@
             <div class="flex flex-col gap-1">
               <div class="flex justify-between">
 
+                <!-- TODO: Add Suite -->
                 <h1 class="text-stone-800 text-md font-crimson font-normal">Suite</h1>
                 <p class="w-56 text-yellow-100 text-xl font-crimson font-normal">from ₱ 3,000.00 / per night</p>
               </div>
@@ -443,6 +447,7 @@
     <p class="w-40 justify-center text-yellow-100 text-[10px] font-light font-['Roboto']">Comfortable rooms and
       suites
       are always ready for your visit.</p>
+    <!-- TODO: Go to search -->
     <button
       class="w-28 h-9 rounded-[30px] border-[0.50px] border-yellow-100 hover:border-yellow-600 hover:bg-yellow-300 text-yellow-100 hover:text-stone-700">
       <p class="justify-center text-xs font-light font-roboto">Booking</p>

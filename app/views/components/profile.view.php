@@ -16,10 +16,12 @@
         <div
             class="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 z-50">
 
+            <!-- TODO: Add Profile -->
             <a href="/profile" class="block px-4 py-2 hover:bg-gray-100">
                 Profile
             </a>
 
+            <!-- TODO: Add Bookings -->
             <a href="/bookings" class="block px-4 py-2 hover:bg-gray-100">
                 Bookings
             </a>
@@ -35,7 +37,8 @@
     <!-- Sign In button for guests -->
     <a href="/signup">
         <button class="rounded-sm hover:bg-[#3F321F] shadow-2xl py-2 px-4 bg-[#C39C4D] transition-colors">
-            <p class="transition-all duration-300 text-white hover:text-white hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
+            <p
+                class="transition-all duration-300 text-white hover:text-white hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
                 Sign In
             </p>
         </button>
