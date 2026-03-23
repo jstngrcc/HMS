@@ -12,7 +12,7 @@
 <body>
     <?php require_once __DIR__ . '/../components/header.view.php'; ?>
     <div class="py-10 px-30 flex flex-col justify-center">
-        <div class="justify-start text-black text-base font-normal font-crimson">404 - Page Not Found</div>
+        <div class="justify-start text-black font-normal font-crimson text-2xl">404 - Page Not Found</div>
     </div>
 </body>
 
