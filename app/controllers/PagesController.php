@@ -4,11 +4,13 @@ class PagesController
 {
     public function privacy()
     {
+        $logged_in = $this->getAuthState();
         require_once '../app/views/static/privacy.view.php';
     }
 
     public function terms()
     {
+        $logged_in = $this->getAuthState();
         require_once '../app/views/static/terms.view.php';
     }
     public function home()
@@ -20,22 +22,32 @@ class PagesController
 
     public function search()
     {
+        $logged_in = $this->getAuthState();
         require_once '../app/views/rooms/search.view.php';
     }
 
     public function standard()
     {
+        $logged_in = $this->getAuthState();
         require_once '../app/views/rooms/standard.view.php';
     }
 
     public function deluxe()
     {
+        $logged_in = $this->getAuthState();
         require_once '../app/views/rooms/deluxe.view.php';
     }
 
     public function suite()
     {
+        $logged_in = $this->getAuthState();
         require_once '../app/views/rooms/suite.view.php';
+    }
+
+    public function cart()
+    {
+        $logged_in = $this->getAuthState();
+        require_once '../app/views/rooms/cart.view.php';
     }
 
     public function notFound()
