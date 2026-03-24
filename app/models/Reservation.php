@@ -8,11 +8,11 @@ class Reservation {
         $this->conn = $db;
     }
 
-    public function createReservation($guestID, $checkin, $checkout, $adults, $children, $roomID, $paymentMethod, $totalAmount) {
+    public function createReservation($guestID, $checkin, $checkout, $adults, $roomID, $paymentMethod, $totalAmount) {
         try {
             $result = $this->conn->execute_query(
-                "CALL CreateReservation(?, ?, ?, ?, ?, ?, ?, ?)",
-                [$guestID, $checkin, $checkout, $adults, $children, $roomID, $paymentMethod, $totalAmount]
+                "CALL CreateReservation(?, ?, ?, ?, ?, ?, ?)",
+                [$guestID, $checkin, $checkout, $adults, $roomID, $paymentMethod, $totalAmount]
             );
 
             if ($result) {

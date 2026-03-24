@@ -24,7 +24,7 @@ class Room {
         return (float)$row['price'];
     }
 
-    function calculateTotalAmount($roomTypeName, $basePrice, $checkin, $checkout, $numAdults = 1, $numChildren = 0) {
+    function calculateTotalAmount($roomTypeName, $basePrice, $checkin, $checkout, $numAdults = 1) {
         // 1. Calculate number of nights
         $checkinDate = new DateTime($checkin);
         $checkoutDate = new DateTime($checkout);
@@ -54,7 +54,7 @@ class Room {
             }
 
             // Total guests
-            $totalGuests = max($numAdults + $numChildren, $occupancy);
+            $totalGuests = max($numAdults, $occupancy);
 
             // Extra charge = 10% of room rate per guest × number of nights
             $extraCharge = $basePrice * 0.10 * $totalGuests * $numNights;

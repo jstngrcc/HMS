@@ -21,12 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Update summary text
   function updateSummary() {
     const rooms = roomsContainer.querySelectorAll(".room-select");
-    let adults = 0, children = 0;
+    let adults = 0;
     rooms.forEach(room => {
       adults += +room.querySelector(".adults").value;
-      children += +room.querySelector(".children").value;
     });
-    summary.textContent = `${adults} Adults, ${children} Children, ${rooms.length} Rooms`;
+    summary.textContent = `${adults} Adults, ${rooms.length} Rooms`;
   }
 
   // Create a new room row (without Done button!)
@@ -37,14 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
       <span>Room ${number}:</span>
       <ion-icon name="person"></ion-icon>Adults:
       <select class="adults"></select>
-      <ion-icon name="people"></ion-icon>Children:
-      <select class="children"></select>
       <button class="remove-room">Remove</button>
       <button class="add-room-inline">+ Add Room</button>
     `;
 
     populateSelect(div.querySelector(".adults"), 0, 10);
-    populateSelect(div.querySelector(".children"), 0, 10);
 
     return div;
   }
@@ -52,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize first room
   const firstRoom = roomsContainer.querySelector(".room-select");
   populateSelect(firstRoom.querySelector(".adults"), 0, 10);
-  populateSelect(firstRoom.querySelector(".children"), 0, 10);
 
   // Event delegation for inline buttons and selects
   roomsContainer.addEventListener("click", e => {
@@ -78,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   roomsContainer.addEventListener("change", e => {
-    if (e.target.matches(".adults, .children")) updateSummary();
+    if (e.target.matches(".adults")) updateSummary();
   });
 
   // Done button (single, below summary)

@@ -231,8 +231,7 @@ DELIMITER $$
 CREATE PROCEDURE CheckoutCart(
     IN pCartID INT,
     IN pPaymentMethodID INT,
-    IN pNumAdults INT,
-    IN pNumChildren INT
+    IN pNumAdults INT
 )
 BEGIN
     DECLARE done INT DEFAULT 0;
@@ -279,8 +278,8 @@ BEGIN
     CLOSE cartCursor;
 
     -- Create Reservation
-    INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, NumChildren)
-    SELECT guestID, 1, MIN(CheckInDate), MAX(CheckOutDate), pNumAdults, pNumChildren
+    INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults)
+    SELECT guestID, 1, MIN(CheckInDate), MAX(CheckOutDate), pNumAdults
     FROM CartRooms
     WHERE CartID = pCartID;
 
@@ -322,7 +321,6 @@ CREATE PROCEDURE CreateReservation(
     IN pCheckIn DATE,
     IN pCheckOut DATE,
     IN pNumAdults INT,
-    IN pNumChildren INT,
     IN pRoomID INT,
     IN pPaymentMethodID INT,
     IN pAmount DECIMAL(10,2)
@@ -353,9 +351,9 @@ BEGIN
     ELSE
 
         INSERT INTO Reservations
-        (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, NumChildren)
+        (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults)
         VALUES
-        (pGuestID, 1, pCheckIn, pCheckOut, pNumAdults, pNumChildren);
+        (pGuestID, 1, pCheckIn, pCheckOut, pNumAdults);
 
         SET reservationID = LAST_INSERT_ID();
 

@@ -106,7 +106,6 @@ CREATE TABLE IF NOT EXISTS Reservations (
     CheckInDate DATE NOT NULL,
     CheckOutDate DATE NOT NULL,
     NumAdults INT DEFAULT 1,
-    NumChildren INT DEFAULT 0,
     CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (GuestID) REFERENCES Guests(GuestID),

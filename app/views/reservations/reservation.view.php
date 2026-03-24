@@ -16,8 +16,6 @@
         <input type="date" id="checkout_date" name="checkout" required class="border border-gray-300 p-2 rounded w-full text-black bg-white"><br>
         <label for="adults">Adults:</label>
         <input type="number" id="adults" name="adults" min="1" required class="border border-gray-300 p-2 rounded w-full text-black bg-white"><br>
-        <label for="children">Children:</label>
-        <input type="number" id="children" name="children" min="0" required class="border border-gray-300 p-2 rounded w-full text-black bg-white"><br>
         <label for="roomID">Room ID:</label>
         <input type="number" id="roomID" name="roomID" required class="border border-gray-300 p-2 rounded w-full text-black bg-white"><br>
         <label for="payment_method">Payment: </label>

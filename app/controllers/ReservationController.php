@@ -17,7 +17,6 @@ class ReservationController {
             $checkin = $_POST['checkin'];
             $checkout = $_POST['checkout'];
             $adults = (int)$_POST['adults'];
-            $children = (int)$_POST['children'];
             $roomID = (int)$_POST['roomID'];
             $paymentMethod = (int)$_POST['paymentMethod'];
             $fname = $_POST['fname'];
@@ -44,10 +43,6 @@ class ReservationController {
                 echo "At least 1 adult is required.";
                 return;
             }
-            if ($children < 0) {
-                echo "Number of children cannot be negative.";
-                return;
-            }
 
             $roomModel = new Room($GLOBALS['conn']);
 
@@ -63,8 +58,7 @@ class ReservationController {
                 $roomModel->getRoomPrice($roomID),
                 $checkin,
                 $checkout,
-                $adults,
-                $children
+                $adults
             );
 
             $reservationModel = new Reservation($GLOBALS['conn']);
@@ -86,7 +80,6 @@ class ReservationController {
                     $checkin,
                     $checkout,
                     $adults,
-                    $children,
                     $roomID,
                     $paymentMethod,
                     $totalAmount
@@ -99,7 +92,6 @@ class ReservationController {
             // echo "checkin: " . $checkin . " (Type: " . gettype($checkin) . ")<br>";
             // echo "checkout: " . $checkout . " (Type: " . gettype($checkout) . ")<br>";
             // echo "adults: " . $adults . " (Type: " . gettype($adults) . ")<br>";
-            // echo "children: " . $children . " (Type: " . gettype($children) . ")<br>";
             // echo "roomID: " . $roomID . " (Type: " . gettype($roomID) . ")<br>";
             // echo "paymentMethod: " . $paymentMethod . " (Type: " . gettype($paymentMethod) . ")<br>";
             // echo "totalAmount: " . $totalAmount . " (Type: " . gettype($totalAmount) . ")<br>";

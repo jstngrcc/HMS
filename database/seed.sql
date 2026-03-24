@@ -67,8 +67,8 @@ INSERT INTO Rooms (RoomNumber, FloorID, RoomTypeID) VALUES
 -- INSERT INTO Users (GuestID, RoleID, Email, PasswordHash) VALUES
 -- (2, 2, 'aniagjoseph593@gmail.com', '$2y$10$44eM8DEp1PQZAU1cpOwtGu1HBFrDOXXR4XfjXbBCoBS6iZNk2bwQ2');
 
--- INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, NumChildren) VALUES
--- (1, 2, '2026-04-08', '2026-04-10', 1, 0);
+-- INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults) VALUES
+-- (1, 2, '2026-04-08', '2026-04-10', 1);
 
 -- INSERT INTO ReservationRooms (ReservationID, RoomID) VALUES
 -- (1, 1);
