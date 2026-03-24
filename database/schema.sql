@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS Reservations (
     CheckInDate DATE NOT NULL,
     CheckOutDate DATE NOT NULL,
     NumAdults INT DEFAULT 1,
+    BookingToken CHAR(36) NOT NULL UNIQUE, -- UUID token for guest access
     CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (GuestID) REFERENCES Guests(GuestID),
@@ -179,6 +180,3 @@ ON Reservations(CheckInDate, CheckOutDate);
 
 CREATE INDEX idx_room_type
 ON Rooms(RoomTypeID);
-
--- TODO: Add tokens to Users
--- TODO: Add descriptions and specific times to rooms

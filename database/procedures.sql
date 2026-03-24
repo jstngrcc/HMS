@@ -67,15 +67,14 @@ CREATE PROCEDURE CreateGuest(
     IN pEmail VARCHAR(150),
     IN pFirstName VARCHAR(100),
     IN pLastName VARCHAR(100),
-    IN pPhone VARCHAR(20)
+    IN pPhone VARCHAR(20),
+    OUT newGuestID INT
 )
 BEGIN
+    INSERT INTO Guests (Email, FirstName, LastName, PhoneContact)
+    VALUES (pEmail, pFirstName, pLastName, pPhone);
 
-    INSERT INTO Guests
-    (Email, FirstName, LastName, PhoneContact)
-    VALUES
-    (pEmail, pFirstName, pLastName, pPhone);
-
+    SET newGuestID = LAST_INSERT_ID();
 END$$
 
 DELIMITER ;
@@ -323,11 +322,13 @@ CREATE PROCEDURE CreateReservation(
     IN pNumAdults INT,
     IN pRoomID INT,
     IN pPaymentMethodID INT,
-    IN pAmount DECIMAL(10,2)
+    IN pAmount DECIMAL(10,2),
+    OUT pReservationID INT,
+    OUT pBookingToken CHAR(36)
 )
 BEGIN
-    DECLARE reservationID INT;
     DECLARE isAvailable BOOLEAN;
+    DECLARE token CHAR(36);
 
     IF pCheckIn < CURDATE() OR pCheckOut < pCheckIn THEN
         SIGNAL SQLSTATE '45000'
@@ -336,6 +337,7 @@ BEGIN
 
     START TRANSACTION;
 
+    -- Lock room
     SELECT RoomID
     FROM Rooms
     WHERE RoomID = pRoomID
@@ -347,27 +349,28 @@ BEGIN
         ROLLBACK;
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Room already booked for these dates';
-
     ELSE
+        -- Generate token
+        SET token = UUID();
 
         INSERT INTO Reservations
-        (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults)
+        (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, BookingToken)
         VALUES
-        (pGuestID, 1, pCheckIn, pCheckOut, pNumAdults);
+        (pGuestID, 1, pCheckIn, pCheckOut, pNumAdults, token);
 
-        SET reservationID = LAST_INSERT_ID();
+        SET pReservationID = LAST_INSERT_ID();
+        SET pBookingToken = token;
 
         INSERT INTO ReservationRooms (ReservationID, RoomID)
-        VALUES (reservationID, pRoomID);
+        VALUES (pReservationID, pRoomID);
 
         INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
-        VALUES (reservationID, pPaymentMethodID, pAmount, 'pending');
+        VALUES (pReservationID, pPaymentMethodID, pAmount, 'pending');
 
         COMMIT;
-        SELECT reservationID AS ReservationID;
 
+        SELECT pReservationID AS ReservationID, pBookingToken AS BookingToken;
     END IF;
-
 END$$
 
 DELIMITER ;
@@ -437,6 +440,61 @@ BEGIN
     UPDATE Payments
     SET PaymentStatus = 'refunded'
     WHERE ReservationID = pReservationID;
+
+    COMMIT;
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE CancelReservationGuest(
+    IN pBookingToken CHAR(36)
+)
+BEGIN
+    DECLARE reservationID INT;
+    DECLARE roomID INT;
+    DECLARE done INT DEFAULT 0;
+
+    -- Cursor to free rooms
+    DECLARE roomCursor CURSOR FOR
+        SELECT RoomID FROM ReservationRooms WHERE ReservationID = reservationID;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    -- Find reservation by token
+    SELECT ReservationID INTO reservationID
+    FROM Reservations
+    WHERE BookingToken = pBookingToken
+      AND TokenExpiresAt IS NULL OR TokenExpiresAt > NOW()
+    FOR UPDATE;
+
+    IF reservationID IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid or expired booking token';
+    END IF;
+
+
+    START TRANSACTION;
+
+    OPEN roomCursor;
+    read_loop: LOOP
+        FETCH roomCursor INTO roomID;
+        IF done THEN LEAVE read_loop; END IF;
+
+        UPDATE Rooms
+        SET Status = 'available'
+        WHERE RoomID = roomID;
+    END LOOP;
+    CLOSE roomCursor;
+
+    UPDATE Reservations
+    SET StatusID = 5
+    WHERE ReservationID = reservationID;
+
+    UPDATE Payments
+    SET PaymentStatus = 'refunded'
+    WHERE ReservationID = reservationID;
 
     COMMIT;
 END$$

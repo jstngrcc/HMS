@@ -4,31 +4,34 @@ require_once '../app/models/Reservation.php';
 require_once '../app/models/Room.php';
 require_once '../app/models/User.php';
 
-class ReservationController {
-    public function reservation() {
+class ReservationController
+{
+    public function reservation()
+    {
         require_once '../app/views/reservations/reservation.view.html';
     }
 
-    public function submit() {
+    public function submit()
+    {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $email = $_POST['email'];
             $checkin = $_POST['checkin'];
             $checkout = $_POST['checkout'];
-            $adults = (int)$_POST['adults'];
-            $roomID = (int)$_POST['roomID'];
-            $paymentMethod = (int)$_POST['paymentMethod'];
+            $adults = (int) $_POST['adults'];
+            $roomID = (int) $_POST['roomID'];
+            $paymentMethod = (int) $_POST['paymentMethod'];
             $fname = $_POST['fname'];
             $lname = $_POST['lname'];
             $phone = $_POST['phone'];
 
-            if(empty($email) || empty($fname) || empty($lname) || empty($phone)){
+            if (empty($email) || empty($fname) || empty($lname) || empty($phone)) {
                 echo "Please fill in all required fields.";
                 return;
             }
 
-            if(empty($checkin) || empty($checkout)){
+            if (empty($checkin) || empty($checkout)) {
                 echo "Please select check-in and check-out dates.";
                 return;
             } else if (strtotime($checkin) > strtotime($checkout)) {
@@ -39,16 +42,16 @@ class ReservationController {
                 return;
             }
 
-            if($adults < 1){
+            if ($adults < 1) {
                 echo "At least 1 adult is required.";
                 return;
             }
 
             $roomModel = new Room($GLOBALS['conn']);
 
-            $available = $roomModel->checkRoomAvailability($roomID,$checkin,$checkout);
+            $available = $roomModel->checkRoomAvailability($roomID, $checkin, $checkout);
 
-            if(!$available){
+            if (!$available) {
                 echo "Room is already booked for selected dates.";
                 return;
             }
@@ -72,10 +75,13 @@ class ReservationController {
             }
 
             $reservations = $reservationModel->getGuestReservations($guestID);
-            if($reservations->num_rows > 0){
+            if ($reservations->num_rows > 0) {
+                // Guest already has a reservation, add the room
                 $reservationModel->addRoomToReservation($reservations->fetch_object()->ReservationID, $roomID);
+                echo "Room added to existing reservation.";
             } else {
-                $reservationModel->createReservation(
+                // Guest has no reservation, create a new one
+                $res = $reservationModel->createReservation(
                     $guestID,
                     $checkin,
                     $checkout,
@@ -84,6 +90,13 @@ class ReservationController {
                     $paymentMethod,
                     $totalAmount
                 );
+
+                if ($res) {
+                    $bookingToken = $res['BookingToken'] ?? 'N/A';
+                    echo "Reservation created successfully! Your Booking Token: $bookingToken";
+                } else {
+                    echo "Failed to create reservation.";
+                }
             }
 
             // DEBUG: show input values and their data types

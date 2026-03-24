@@ -54,11 +54,13 @@ class User
 
         // Create new guest
         $this->conn->execute_query(
-            "CALL CreateGuest(?, ?, ?, ?)",
+            "CALL CreateGuest(?, ?, ?, ?, @newGuestID)",
             [$email, $firstName, $lastName, $phone]
         );
 
-        return $this->conn->insert_id;
+        $result = $this->conn->query("SELECT @newGuestID AS GuestID;");
+
+        return $result->fetch_assoc()['GuestID'];
     }
 
     public function createGuestUser($email, $emailGuest, $password, $firstName, $lastName, $phone)

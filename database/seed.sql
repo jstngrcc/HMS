@@ -57,26 +57,3 @@ INSERT INTO Rooms (RoomNumber, FloorID, RoomTypeID) VALUES
 
 ('301',3,1),('302',3,1),('303',3,2),('304',3,2),('305',3,3),
 ('306',3,1),('307',3,2),('308',3,3),('309',3,1),('310',3,2);
-
--- =========================
--- Test Reservation
--- =========================
--- INSERT INTO Guests (Email, FirstName, LastName, PhoneContact) VALUES 
--- ('aniagjoseph593@gmail.com', 'Joseph', 'Aniag', '092-584-5771');
-
--- INSERT INTO Users (GuestID, RoleID, Email, PasswordHash) VALUES
--- (2, 2, 'aniagjoseph593@gmail.com', '$2y$10$44eM8DEp1PQZAU1cpOwtGu1HBFrDOXXR4XfjXbBCoBS6iZNk2bwQ2');
-
--- INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults) VALUES
--- (1, 2, '2026-04-08', '2026-04-10', 1);
-
--- INSERT INTO ReservationRooms (ReservationID, RoomID) VALUES
--- (1, 1);
-
--- INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus) VALUES
--- (1, 4, 5000.00, 'completed');
-
--- UPDATE Reservations
--- SET StatusID = 5
--- WHERE StatusID = 1
--- AND CreatedAt < NOW() - INTERVAL 30 MINUTE;

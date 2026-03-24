@@ -1,25 +1,33 @@
 <?php
 
-class Reservation {
+class Reservation
+{
 
     private $conn;
 
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->conn = $db;
     }
 
-    public function createReservation($guestID, $checkin, $checkout, $adults, $roomID, $paymentMethod, $totalAmount) {
+    public function createReservation($guestID, $checkin, $checkout, $adults, $roomID, $paymentMethod, $totalAmount)
+    {
         try {
-            $result = $this->conn->execute_query(
-                "CALL CreateReservation(?, ?, ?, ?, ?, ?, ?)",
+            $this->conn->execute_query(
+                "CALL CreateReservation(?, ?, ?, ?, ?, ?, ?, @ReservationID, @BookingToken)",
                 [$guestID, $checkin, $checkout, $adults, $roomID, $paymentMethod, $totalAmount]
             );
 
+            $result = $this->conn->query("SELECT @ReservationID AS ReservationID, @BookingToken AS BookingToken;");
+
+
             if ($result) {
                 $row = $result->fetch_assoc();
-                $reservationID = $row['ReservationID'] ?? null;
                 $result->free();
-                return $reservationID;
+                return [
+                    'ReservationID' => $row['ReservationID'],
+                    'BookingToken' => $row['BookingToken']
+                ];
             } else {
                 throw new Exception("Failed to create reservation: " . $this->conn->error);
             }
@@ -29,12 +37,22 @@ class Reservation {
         }
     }
 
-    public function cancelReservation($reservationID) {
+    public function cancelReservation($reservationID = null, $bookingToken = null)
+    {
         try {
-            $result = $this->conn->execute_query(
-                "CALL CancelReservation(?)",
-                [$reservationID]
-            );
+            if ($bookingToken) {
+                $result = $this->conn->execute_query(
+                    "CALL CancelReservationGuest(?)",
+                    [$bookingToken]
+                );
+            } elseif ($reservationID) {
+                $result = $this->conn->execute_query(
+                    "CALL CancelReservation(?)",
+                    [$reservationID]
+                );
+            } else {
+                throw new Exception("Either reservation ID or booking token must be provided.");
+            }
 
             if ($result) {
                 echo "Reservation cancelled successfully.";
@@ -46,7 +64,8 @@ class Reservation {
         }
     }
 
-    public function addRoomToReservation($reservationID, $roomID) {
+    public function addRoomToReservation($reservationID, $roomID)
+    {
         try {
             $result = $this->conn->execute_query(
                 "CALL AddRoomToReservation(?, ?)",
@@ -63,11 +82,26 @@ class Reservation {
         }
     }
 
-    public function getGuestReservations($GuestID) {
+    public function getGuestReservations($GuestID)
+    {
         try {
             $result = $this->conn->execute_query(
                 "SELECT * FROM Reservations WHERE GuestID = ?",
                 [$GuestID]
+            );
+            return $result;
+        } catch (Exception $e) {
+            echo $e->getMessage();
+            return null;
+        }
+    }
+
+    public function getGuestReservationByToken($bookingToken)
+    {
+        try {
+            $result = $this->conn->execute_query(
+                "SELECT * FROM Reservations WHERE BookingToken = ?",
+                [$bookingToken]
             );
             return $result;
         } catch (Exception $e) {
