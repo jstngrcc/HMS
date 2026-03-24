@@ -12,24 +12,87 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 
-<body>
+<!-- Booking Confirmation Modal -->
+<div id="booking-modal" class="fixed inset-0 hidden items-start pt-15 justify-center bg-[rgba(0,0,0,0.7)]  z-50">
+    <div class="flex">
+        <!-- Left Side -->
+        <div class="bg-white rounded-l-sm shadow-lg w-150 p-6 flex flex-col gap-4 relative">
+            <div class="flex items-center space-x-2">
+                <?php include $_SERVER['DOCUMENT_ROOT'] . '/assets/icons/check.svg'; ?>
+                <div class="text-[#6D9858] text-xl font-normal font-crimson">Room successfully added to your cart</div>
+            </div>
+            <div class="flex gap-4">
+                <img id="modal-image" src="/assets/images/standard.jpg" alt="Room Image"
+                    class="w-24 h-24 rounded object-cover">
+                <div class="flex flex-col gap-2">
+                    <h5 id="modal-room-type" class="font-crimson font-semibold text-black">Standard Room</h5>
+                    <h5 class="font-roboto font-semibold text-black">Time Duration:
+                        <span id="modal-checkin-checkout" class="font-roboto text-black font-normal">Check-In —
+                            Check-Out</span>
+                    </h5>
+                    <h5 class="font-roboto font-semibold text-black">Room Occupancy:
+                        <span id="modal-guests" class="font-roboto text-black font-normal">1 Guest</span>
+                    </h5>
+                    <h5 class="font-roboto font-semibold text-black">Room Type:
+                        <span id="modal-room" class="font-roboto text-black font-normal">Single</span>
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+<!-- Right Side -->
+<div class="bg-[#F7F7F7] rounded-r-sm shadow-lg w-150 p-6 flex flex-col gap-4 relative">
+    <button id="close-modal" class="absolute top-1 right-2 text-gray-500 hover:text-gray-800 font-bold">×</button>
+    <div class="text-black text-xl font-normal font-crimson">1 item in your cart</div>
+    <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
+    <div class="flex flex-col gap-2">
+        <div class="flex justify-between">
+            <h6 class="font-roboto font-semibold text-black">Room cost per Night:</h6>
+            <p id="modal-room-cost" class="font-roboto font-normal text-black">₱1,800.00</p>
+        </div>
+        <div class="flex justify-between">
+            <h6 class="font-roboto font-semibold text-black">Night Discount:</h6>
+            <p id="modal-night-discount" class="font-roboto font-normal text-black">₱0.00</p>
+        </div>
+        <div class="flex justify-between">
+            <h6 class="font-roboto font-semibold text-black">Additional Guest Charge:</h6>
+            <p id="modal-guest-charge" class="font-roboto font-normal text-black">₱0.00</p>
+        </div>
+        <div class="flex justify-between">
+            <h6 class="font-roboto font-semibold text-black">Total (12% tax incl.)</h6>
+            <p id="modal-total" class="font-roboto font-normal text-black">₱2,016.00</p>
+        </div>
+    </div>
+    <div class="flex justify-end gap-3 mt-4">
+        <button id="continue-browsing" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded">Continue Browsing</button>
+        <button id="proceed-checkout" class="bg-[#c39c4d] hover:bg-[#b28a44] text-white font-semibold px-4 py-2 rounded">Proceed to Checkout</button>
+    </div>
+</div>
+    </div>
+</div>
+
+<body data-room-type="standard">
     <?php require_once __DIR__ . '/../components/header.view.php'; ?>
 
     <div class="py-10 px-30 flex flex-col gap-5">
-        <div class="justify-start text-black text-lg font-normal font-crimson">Home > Book Now</div>
+        <div class="justify-start text-black text-lg font-normal font-crimson">
+            <a href="/home" class="hover:underline">Home</a> &gt; Book Now
+        </div>
 
         <div class="flex justify-between gap-8">
-            <div class="p-6 w-2/3 bg-white rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]">
-                <div class="justify-center text-black text-3xl font-normal font-crimson">Standard Room</div>
-                <div class="flex items-center justify-start">
-                    <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
-                    <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
-                    <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
-                    <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
-                    <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
-                    <h6 class="font-normal font-roboto ml-3">1 Review</h6>
+            <div
+                class="p-6 w-2/3 bg-white rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] flex flex-col gap-2 justify-between">
+                <div>
+                    <div class="justify-center text-black text-3xl font-normal font-crimson">Standard Room</div>
+                    <div class="flex items-center justify-start">
+                        <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
+                        <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
+                        <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
+                        <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
+                        <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
+                        <h6 class="font-normal font-roboto ml-3">1 Review</h6>
+                    </div>
                 </div>
-                <br>
                 <div class="flex gap-6">
                     <div class="w-[20%] flex flex-col gap-4 left-thumbnails">
                         <img class="w-50 h-1/3 rounded-[3px] object-cover  hover:scale-105 transition-transform duration-300"
@@ -41,17 +104,36 @@
                     </div>
 
                     <div class="w-[80%] main-image">
-                        <img class="w-full max-h-150 object-cover rounded" src="/assets/images/standard.jpg" />
+                        <img class="w-full max-h-200 object-cover rounded" src="/assets/images/standard.jpg" />
                     </div>
                 </div>
             </div>
             <form action="/cart" method="POST"
                 class="w-1/3 bg-white rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] p-6 flex flex-col gap-6">
                 <div class="justify-center text-black text-xl font-normal font-crimson">Check In - Check Out</div>
-                <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out"
+                <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out" required
                     class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
-                <div class="justify-center text-black text-xl font-normal font-crimson">Guests</div>
-                <input type="number" id="guests" placeholder="Guests" min="1" value="1"
+                <div>
+                    <div class="justify-center text-zinc-500 text-lg font-normal font-crimson">Time-In 12:00 PM –
+                        Time-Out
+                        11:00 PM</div>
+                    <p class="text-zinc-500 font-normal text-xs">You qualify for a 15% discount for staying more
+                        than 3
+                        nights!
+                    </p>
+
+                </div>
+                <div>
+                    <div id="guests-label" class="justify-center text-black text-xl font-normal font-crimson">
+                        Guests (Max 2)
+                    </div>
+                    <p class="text-sm text-gray-500" id="guests-addon">Additional guests (above 1) cost 10% of the
+                        room
+                        rate
+                        per
+                        night.</p>
+                </div>
+                <input type="number" id="guests" placeholder="Guests" min="1" max="2" value="1" required
                     class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
                 <div class="justify-center text-black text-xl font-normal font-crimson">Room Type</div>
                 <div class="flex items-center gap-4">
@@ -71,11 +153,13 @@
                     </label>
                 </div>
                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
-                <div class="justify-center text-zinc-500 text-xl font-normal font-crimson">Room Price</div>
+                <div class="justify-center text-zinc-500 text-xl font-normal font-crimson">Room Rate (per night)
+                </div>
                 <div id="room-price" class="justify-center text-black text-xl font-normal font-crimson">₱1,800</div>
                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
-                <div class="justify-center text-zinc-500 text-xl font-normal font-crimson">Total</div>
-                <div id="total-price" class="justify-center text-black text-xl font-normal font-crimson">₱2,016</div>
+                <div class="justify-center text-zinc-500 text-xl font-normal font-crimson">Subtotal</div>
+                <div id="subtotal-price" class="justify-center text-black text-xl font-normal font-crimson">₱1,800
+                </div>
                 <button type="submit" class="text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#c39c4d] p-3 
            hover:bg-[#b28a44] transition-colors duration-300">
                     BOOK NOW
@@ -93,16 +177,19 @@
             </div>
             <div class="w-full bg-white rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] p-6 flex flex-col gap-4">
                 <div class="justify-center text-black text-md font-roboto font-normal">Enjoy comfort and simplicity
-                    in our Standard Room, designed for a relaxing stay. Featuring cozy bedding, modern furnishings, and
+                    in our Standard Room, designed for a relaxing stay. Featuring cozy bedding, modern furnishings,
+                    and
                     essential amenities, this room provides everything you need for a pleasant and convenient
-                    experience. Perfect for solo travelers or couples looking for a comfortable space to unwind after a
+                    experience. Perfect for solo travelers or couples looking for a comfortable space to unwind
+                    after a
                     day of exploring.</div>
                 <div class="justify-center text-zinc-500 text-md font-roboto font-normal">MAX NO. GUESTS</div>
                 <ul class="text-black text-md font-normal font-roboto">
                     <li>Single – 2 Guests</li>
                     <li>Double – 3 Guests</li>
                 </ul>
-                <div class="justify-center text-zinc-500 text-md font-roboto font-normal">CHECK-IN AND CHECK-OUT TIME
+                <div class="justify-center text-zinc-500 text-md font-roboto font-normal">CHECK-IN AND CHECK-OUT
+                    TIME
                     <ul class="text-black text-md font-normal font-roboto">
                         <li>Check-in: 12:00 PM</li>
                         <li>Check-out: 11:00 AM</li>
@@ -124,18 +211,25 @@
                     </li>
                 </ul>
                 <div class="justify-center text-zinc-500 text-md font-roboto font-normal">HOTEL DESCRIPTION</div>
-                <div class="justify-center text-black text-2xl font-roboto font-bold">Welcome to Subic Riviera!</div>
-                <div class="justify-center text-black text-lg font-roboto font-normal">Experience elegance, comfort, and
-                    seaside relaxation at Subic Riviera. Located near the beautiful coastline of Subic, our hotel offers
+                <div class="justify-center text-black text-2xl font-roboto font-bold">Welcome to Subic Riviera!
+                </div>
+                <div class="justify-center text-black text-lg font-roboto font-normal">Experience elegance, comfort,
+                    and
+                    seaside relaxation at Subic Riviera. Located near the beautiful coastline of Subic, our hotel
+                    offers
                     a perfect escape for travelers looking to unwind while enjoying modern luxury. Whether you are
                     visiting for leisure, business, or a special event, Subic Riviera provides a memorable stay with
                     exceptional service, stylish accommodations, and premium facilities. </div>
-                <div class="justify-center text-black text-lg font-roboto font-semibold">Benefits of Staying at Riviera!
+                <div class="justify-center text-black text-lg font-roboto font-semibold">Benefits of Staying at
+                    Riviera!
                 </div>
                 <div class="justify-center text-black text-md font-roboto italic">Accommodation:</div>
-                <div class="justify-center text-black text-md font-roboto">Relax in our well-designed rooms and suites
-                    that combine comfort with modern elegance. Each room is thoughtfully furnished with plush bedding,
-                    individually controlled air conditioning, high-speed Wi-Fi, a smart TV, and spacious interiors that
+                <div class="justify-center text-black text-md font-roboto">Relax in our well-designed rooms and
+                    suites
+                    that combine comfort with modern elegance. Each room is thoughtfully furnished with plush
+                    bedding,
+                    individually controlled air conditioning, high-speed Wi-Fi, a smart TV, and spacious interiors
+                    that
                     create a calm and relaxing atmosphere. After a day of exploring Subic or attending meetings, our
                     rooms provide the perfect place to rest and recharge.</div>
                 <div class="justify-center text-black text-md font-roboto italic">Dining:</div>
@@ -145,30 +239,39 @@
                     flavors, perfect for casual meals, sunset drinks, or a relaxing evening with friends and family.
                 </div>
                 <div class="justify-center text-black text-md font-roboto italic">Facilities:</div>
-                <div class="justify-center text-black text-md font-roboto">Subic Riviera offers a variety of facilities
-                    designed to enhance your stay. Take a refreshing swim in our outdoor swimming pool, enjoy stunning
-                    views while relaxing at the rooftop pool and bar, or stay active in our fully equipped fitness gym.
+                <div class="justify-center text-black text-md font-roboto">Subic Riviera offers a variety of
+                    facilities
+                    designed to enhance your stay. Take a refreshing swim in our outdoor swimming pool, enjoy
+                    stunning
+                    views while relaxing at the rooftop pool and bar, or stay active in our fully equipped fitness
+                    gym.
                     Guests can also enjoy comfortable lounge areas and beautifully designed spaces perfect for
                     relaxation.</div>
                 <div class="justify-center text-black text-md font-roboto italic">Events and Meetings:</div>
                 <div class="justify-center text-black text-md font-roboto">Host memorable events at our spacious and
-                    versatile event halls. Whether you are planning a corporate meeting, conference, wedding reception,
-                    or private celebration, our event venues provide the ideal setting. Equipped with modern audiovisual
+                    versatile event halls. Whether you are planning a corporate meeting, conference, wedding
+                    reception,
+                    or private celebration, our event venues provide the ideal setting. Equipped with modern
+                    audiovisual
                     technology and supported by our dedicated event staff, we ensure every event is seamless and
                     successful.</div>
                 <div class="justify-center text-black text-md font-roboto italic">Location:</div>
                 <div class="justify-center text-black text-md font-roboto">Situated close to the sea, Subic Riviera
-                    allows guests to enjoy the refreshing ocean breeze and easy access to nearby coastal attractions.
-                    Guests can explore the nearby shoreline, enjoy beautiful sunsets, and visit shopping, dining, and
+                    allows guests to enjoy the refreshing ocean breeze and easy access to nearby coastal
+                    attractions.
+                    Guests can explore the nearby shoreline, enjoy beautiful sunsets, and visit shopping, dining,
+                    and
                     entertainment spots within the Subic area.</div>
                 <div class="justify-center text-black text-md font-roboto italic">Exceptional Service:</div>
                 <div class="justify-center text-black text-md font-roboto">At Subic Riviera, we pride ourselves on
-                    delivering exceptional service. From check-in to check-out, our friendly and professional staff are
+                    delivering exceptional service. From check-in to check-out, our friendly and professional staff
+                    are
                     dedicated to ensuring your stay is comfortable, convenient, and truly memorable.</div>
                 <br>
                 <div class="justify-center text-zinc-500 text-md font-roboto font-normal">HOTEL POLICIES</div>
                 <ul class="list-disc text-black text-md font-normal font-roboto ml-5">
-                    <li>Accommodation will only be provided to guests whose details are registered at the hotel front
+                    <li>Accommodation will only be provided to guests whose details are registered at the hotel
+                        front
                         desk.</li>
                     <li>Guests must present a valid photo identification during check-in.</li>
                     <li>Applicable taxes and government charges may apply.</li>
@@ -177,7 +280,8 @@
                         check-out are subject to availability.</li>
                     <li>The hotel reserves the right to refuse accommodation to guests who do not comply with hotel
                         policies and regulations.</li>
-                    <li>Guests are responsible for any damage or loss caused to hotel property during their stay.</li>
+                    <li>Guests are responsible for any damage or loss caused to hotel property during their stay.
+                    </li>
                 </ul>
             </div>
         </div>
@@ -185,6 +289,8 @@
     <script src="/js/thumbnail.js"></script>
     <script src="/js/daterange.js"></script>
     <script src="/js/calculateTotalAmount.js"></script>
+    <script src="/js/bookingModal.js"></script>
+    <script src="/js/maxGuests.js"></script>
 </body>
 
 </html>

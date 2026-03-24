@@ -99,6 +99,10 @@ switch ($uri) {
         $pages->suite();
         break;
 
+    case '/cart':
+        $pages->cart();
+        break;
+
     default:
         $pages->notFound();
         break;

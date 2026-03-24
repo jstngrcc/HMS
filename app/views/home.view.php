@@ -57,7 +57,7 @@
     </a>
     <?php require_once __DIR__ . '/components/profile.view.php'; ?>
     <!-- TODO: Add carts -->
-    <a href="#">
+    <a href="/cart">
       <img src="/assets/icons/cart.svg" alt="Cart icon"
         class="transition-all duration-200 rounded hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.9)] hover:scale-105">
     </a>
