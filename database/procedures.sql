@@ -178,6 +178,140 @@ END$$
 DELIMITER ;
 
 -- =========================
+-- CARTS
+-- =========================
+DELIMITER $$
+
+CREATE PROCEDURE AddRoomToCart(
+    IN pCartID INT,
+    IN pRoomID INT,
+    IN pCheckIn DATE,
+    IN pCheckOut DATE
+)
+BEGIN
+    DECLARE isAvailable BOOLEAN;
+
+    -- Validate dates
+    IF pCheckIn >= pCheckOut THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Check-out must be after check-in';
+    END IF;
+
+    -- Check if room is already booked
+    CALL CheckRoomAvailability(pRoomID, pCheckIn, pCheckOut, isAvailable);
+
+    IF isAvailable = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Room not available for these dates';
+    END IF;
+
+    -- Check if room is already in another cart
+    IF EXISTS (
+        SELECT 1 
+        FROM CartRooms cr
+        JOIN ReservationCarts c ON cr.CartID = c.CartID
+        WHERE cr.RoomID = pRoomID
+          AND cr.CheckInDate < pCheckOut
+          AND cr.CheckOutDate > pCheckIn
+          AND c.ExpiresAt > NOW()
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Room temporarily held in another cart';
+    END IF;
+
+    -- Add room to cart
+    INSERT INTO CartRooms (CartID, RoomID, CheckInDate, CheckOutDate)
+    VALUES (pCartID, pRoomID, pCheckIn, pCheckOut);
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE CheckoutCart(
+    IN pCartID INT,
+    IN pPaymentMethodID INT,
+    IN pNumAdults INT,
+    IN pNumChildren INT
+)
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE roomID INT;
+    DECLARE checkIn DATE;
+    DECLARE checkOut DATE;
+    DECLARE guestID INT;
+    DECLARE reservationID INT;
+    DECLARE isAvailable BOOLEAN;
+    DECLARE errMsg VARCHAR(255);
+
+    -- Cursor for rooms in cart
+    DECLARE cartCursor CURSOR FOR
+        SELECT RoomID, CheckInDate, CheckOutDate
+        FROM CartRooms
+        WHERE CartID = pCartID;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    -- Get GuestID
+    SELECT GuestID INTO guestID
+    FROM ReservationCarts
+    WHERE CartID = pCartID
+    FOR UPDATE;
+
+    -- Start transaction
+    START TRANSACTION;
+
+    OPEN cartCursor;
+    read_loop: LOOP
+        FETCH cartCursor INTO roomID, checkIn, checkOut;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Check availability
+        CALL CheckRoomAvailability(roomID, checkIn, checkOut, isAvailable);
+        IF isAvailable = 0 THEN
+            SET errMsg = CONCAT('Room ', roomID, ' no longer available');
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = errMsg;
+        END IF;
+    END LOOP;
+    CLOSE cartCursor;
+
+    -- Create Reservation
+    INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, NumChildren)
+    SELECT guestID, 1, MIN(CheckInDate), MAX(CheckOutDate), pNumAdults, pNumChildren
+    FROM CartRooms
+    WHERE CartID = pCartID;
+
+    SET reservationID = LAST_INSERT_ID();
+
+    -- Add rooms to ReservationRooms
+    INSERT INTO ReservationRooms (ReservationID, RoomID)
+    SELECT reservationID, RoomID
+    FROM CartRooms
+    WHERE CartID = pCartID;
+
+    -- Create Payment
+    INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
+    SELECT reservationID, pPaymentMethodID, SUM(rt.BasePrice), 'pending'
+    FROM CartRooms cr
+    JOIN Rooms r ON cr.RoomID = r.RoomID
+    JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
+    WHERE cr.CartID = pCartID;
+
+    -- Remove cart
+    DELETE FROM CartRooms WHERE CartID = pCartID;
+    DELETE FROM ReservationCarts WHERE CartID = pCartID;
+
+    COMMIT;
+
+    SELECT reservationID AS ReservationID;
+END$$
+
+DELIMITER ;
+
+-- =========================
 -- RESERVATION
 -- =========================
 

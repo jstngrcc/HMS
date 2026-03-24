@@ -151,6 +151,28 @@ CREATE TABLE IF NOT EXISTS Payments (
 );
 
 -- =========================
+-- CARTS
+-- =========================
+
+CREATE TABLE IF NOT EXISTS ReservationCarts (
+    CartID INT AUTO_INCREMENT PRIMARY KEY,
+    GuestID INT NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ExpiresAt DATETIME,
+    FOREIGN KEY (GuestID) REFERENCES Guests(GuestID)
+);
+
+CREATE TABLE IF NOT EXISTS CartRooms (
+    CartRoomID INT AUTO_INCREMENT PRIMARY KEY,
+    CartID INT NOT NULL,
+    RoomID INT NOT NULL,
+    CheckInDate DATE NOT NULL,
+    CheckOutDate DATE NOT NULL,
+    FOREIGN KEY (CartID) REFERENCES ReservationCarts(CartID),
+    FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID)
+);
+
+-- =========================
 -- INDEXES
 -- =========================
 CREATE INDEX idx_reservation_dates
