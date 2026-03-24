@@ -1,12 +1,17 @@
 .idea/
+.vscode/
 
 # Node dependencies
 node_modules/
 
+# Composer files
+composer.json
+composer.lock
+vendor/
+
 # npm lock (optional but usually kept)
-# package-lock.json
+package-lock.json
+package.json
 
 # Tailwind generated CSS
-public/css/output.css
-
 .env
