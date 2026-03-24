@@ -13,6 +13,9 @@
     <?php require_once __DIR__ . '/../components/header.view.php'; ?>
 
     <div class="py-10 px-30 flex flex-col gap-5">
+        <div class="justify-start text-black text-lg font-normal font-crimson">
+            <a href="/home" class="hover:underline">Home</a> <a href="/signup" class="hover:underline">&gt; Authentication</a> &gt; Account Recovery
+        </div>
 
         <h1 class="font-crimson font-bold text-3xl">ACCOUNT RECOVERY</h1>
 
