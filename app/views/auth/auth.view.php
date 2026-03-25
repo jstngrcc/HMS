@@ -25,6 +25,7 @@
             <div class="flex flex-col border rounded p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] w-full gap-2">
                 <!-- Pop up for checking if an account already exists with the email, if not create an account and log in, if yes, log in and redirect to home page -->
                 <h1 class="font-bold">CREATE AN ACCOUNT</h1>
+                <!-- TODO: Add email verification when signing up -->
                 <p class="italic">Please enter your details to create an account.</p>
                 <form id="signup-form" action="/signup-submit" method="POST">
                     <label for="fname">First Name: </label>
@@ -98,6 +99,8 @@
         </div>
 
     </div>
+
+    <?php require_once __DIR__ . '/../components/footer.view.php'; ?>
     <script src="/js/signup.js"></script>
 </body>
 

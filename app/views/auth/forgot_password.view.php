@@ -37,8 +37,10 @@
                 </form>
             </div>
         </div>
+            <?php require_once __DIR__ . '/../components/backButton.view.php'; ?>
 
     </div>
+    <?php require_once __DIR__ . '/../components/footer.view.php'; ?>
     <script src="/js/signup.js"></script>
 </body>
 

@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="/css/output.css">
 </head>
 
-<body>
+<body class="min-h-screen flex flex-col">
     <?php require_once __DIR__ . '/../components/header.view.php'; ?>
 
 
-    <div class="py-10 px-30 flex flex-col gap-5">
+    <div class="flex-1 py-10 px-30 flex flex-col gap-5">
         <div class="justify-start text-black text-lg font-normal font-crimson">
             <a href="/home" class="hover:underline">Home</a> &gt; Cart
         </div>
@@ -30,6 +30,8 @@
         </div>
 
     </div>
+
+    <?php require_once __DIR__ . '/../components/footer.view.php'; ?>
     <script src="/js/signup.js"></script>
 </body>
 

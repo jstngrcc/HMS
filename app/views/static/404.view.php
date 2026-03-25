@@ -9,14 +9,33 @@
     <link rel="stylesheet" href="/css/output.css">
 </head>
 
-<body>
+<body class="min-h-screen flex flex-col">
     <?php require_once __DIR__ . '/../components/header.view.php'; ?>
-    <div class="py-10 px-30 flex flex-col justify-center">
-        <div class="justify-start text-black text-lg font-normal font-crimson">
+
+    <main class="flex-1 py-10 px-30 flex flex-col">
+        <div class="text-black text-lg font-normal font-crimson mb-2">
             <a href="/home" class="hover:underline">Home</a> &gt; 404 - Page Not Found
         </div>
-        <div class="justify-start text-black font-normal font-crimson text-2xl">404 - Page Not Found</div>
-    </div>
+
+        <div class="mx-auto h-1 w-full bg-yellow-900/60 rounded-lg"></div>
+        <div class="text-black font-normal font-crimson text-2xl my-3">
+            404 - Page Not Found
+        </div>
+
+        <?php require_once __DIR__ . '/../components/backButton.view.php'; ?>
+    </main>
+
+    <footer class="bg-linear-to-r from-black/75 to-stone-500/75 flex justify-center p-6 gap-8 items-center">
+        <div class="text-2xl font-crimson italic bg-gradient-to-b from-yellow-100 to-yellow-800 text-transparent bg-clip-text">
+            Find your perfect stay
+        </div>
+        <p class="w-40 justify-center text-yellow-100 text-[10px] font-light font-['Roboto']">
+            Comfortable rooms and suites are always ready for your visit.
+        </p>
+        <button class="w-28 h-9 rounded-[30px] border-[0.50px] border-yellow-100 hover:border-yellow-600 hover:bg-yellow-300 text-yellow-100 hover:text-stone-700">
+            <p class="justify-center text-xs font-light font-roboto">Booking</p>
+        </button>
+    </footer>
 </body>
 
 </html>
