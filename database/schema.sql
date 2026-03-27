@@ -12,6 +12,13 @@ CREATE TABLE IF NOT EXISTS Roles (
 -- =========================
 -- USERS
 -- =========================
+CREATE TABLE IF NOT EXISTS SessionGuests (
+    SessionGuestID INT AUTO_INCREMENT PRIMARY KEY,
+    SessionToken VARCHAR(255) NOT NULL UNIQUE,
+    ExpiresAt TIMESTAMP NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS Guests (
     GuestID INT AUTO_INCREMENT PRIMARY KEY,
     Email VARCHAR(150) NOT NULL UNIQUE,
@@ -158,18 +165,22 @@ CREATE TABLE IF NOT EXISTS Payments (
 
 CREATE TABLE IF NOT EXISTS ReservationCarts (
     CartID INT AUTO_INCREMENT PRIMARY KEY,
-    GuestID INT NOT NULL,
+    SessionGuestID INT NOT NULL UNIQUE,
     CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ExpiresAt DATETIME,
-    FOREIGN KEY (GuestID) REFERENCES Guests(GuestID)
+    FOREIGN KEY (SessionGuestID) REFERENCES SessionGuests(SessionGuestID)
 );
 
 CREATE TABLE IF NOT EXISTS CartRooms (
     CartRoomID INT AUTO_INCREMENT PRIMARY KEY,
     CartID INT NOT NULL,
-    RoomID INT NOT NULL UNIQUE,
+    RoomID INT NOT NULL,
     CheckInDate DATE NOT NULL,
     CheckOutDate DATE NOT NULL,
+    NumAdults INT NOT NULL,
+
+    UNIQUE (CartID, RoomID),
+
     FOREIGN KEY (CartID) REFERENCES ReservationCarts(CartID),
     FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID)
 );
@@ -182,3 +193,6 @@ ON Reservations(CheckInDate, CheckOutDate);
 
 CREATE INDEX idx_room_type
 ON Rooms(RoomTypeID);
+
+CREATE INDEX idx_session_guest 
+ON ReservationCarts(SessionGuestID);

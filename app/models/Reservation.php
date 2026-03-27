@@ -109,4 +109,23 @@ class Reservation
             return null;
         }
     }
+
+    public function addRoomToCart($roomID, $checkin, $checkout, $adults)
+    {
+        try {
+            $result = $this->conn->execute_query(
+                "CALL AddRoomToCart(?, ?, ?, ?)",
+                [$roomID, $checkin, $checkout, $adults]
+            );
+
+            if ($result) {
+                echo "Room added to cart successfully.";
+            } else {
+                throw new Exception("Failed to add room to cart: " . $this->conn->error);
+            }
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
+    }
+
 }

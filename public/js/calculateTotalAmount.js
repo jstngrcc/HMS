@@ -44,7 +44,7 @@ function updatePriceUI({ nights, guests, roomType }) {
     document.getElementById("room-price").textContent =
         `₱${pricing.basePrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
     document.getElementById("subtotal-price").textContent =
-        `₱${pricing.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+        `₱${pricing.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 }
 
 // Event handlers

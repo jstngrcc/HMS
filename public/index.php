@@ -15,9 +15,30 @@ require_once '../config/connect.php';
 require_once '../app/controllers/AuthController.php';
 require_once '../app/controllers/PagesController.php';
 require_once '../app/controllers/ReservationController.php';
+require_once '../app/controllers/CartController.php';
+require_once '../app/models/SessionGuest.php';
+require_once '../app/models/ReservationCart.php';
+
+if (!isset($_SESSION['session_token'])) {
+    $_SESSION['session_token'] = bin2hex(random_bytes(16));
+}
+
+$sessionToken = $_SESSION['session_token'];
+
+$sessionGuestModel = new SessionGuest($GLOBALS['conn']);
+$sessionGuestID = $sessionGuestModel->findOrCreate($sessionToken);
+
+// TODO
+$cartModel = new ReservationCart($GLOBALS['conn']);
+// TODO
+$cartID = $cartModel->findOrCreateCart($sessionToken);
+
+$_SESSION['session_guest_id'] = $sessionGuestID;
+$_SESSION['cart_id'] = $cartID;
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
+$cart = new CartController();
 $auth = new AuthController();
 $pages = new PagesController();
 $reservation = new ReservationController();
@@ -68,7 +89,7 @@ switch ($uri) {
         break;
 
     case '/reservation':
-        $reservation->reservation();
+        $pages->reservation();
         break;
 
     case '/reservation-submit':
@@ -101,6 +122,10 @@ switch ($uri) {
 
     case '/cart':
         $pages->cart();
+        break;
+
+    case '/cart-submit':
+        $cart->submit();
         break;
 
     default:

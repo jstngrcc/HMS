@@ -185,7 +185,8 @@ CREATE PROCEDURE AddRoomToCart(
     IN pCartID INT,
     IN pRoomID INT,
     IN pCheckIn DATE,
-    IN pCheckOut DATE
+    IN pCheckOut DATE,
+    IN pNumAdults INT
 )
 BEGIN
     DECLARE isAvailable BOOLEAN;
@@ -194,6 +195,12 @@ BEGIN
     IF pCheckIn >= pCheckOut THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Check-out must be after check-in';
+    END IF;
+
+    -- Validate number of guests
+    IF pNumAdults <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Must have at least 1 guest';
     END IF;
 
     -- Check if room is already booked
@@ -205,18 +212,115 @@ BEGIN
     END IF;
 
     -- Add room to cart
-    INSERT INTO CartRooms (CartID, RoomID, CheckInDate, CheckOutDate)
-    VALUES (pCartID, pRoomID, pCheckIn, pCheckOut);
+    INSERT INTO CartRooms (CartID, RoomID, CheckInDate, CheckOutDate, NumAdults)
+    VALUES (pCartID, pRoomID, pCheckIn, pCheckOut, pNumAdults);
 END$$
 
 DELIMITER ;
 
 DELIMITER $$
 
+-- CREATE PROCEDURE CheckoutCart(
+--     IN pCartID INT,
+--     IN pPaymentMethodID INT,
+--     IN pNumAdults INT
+-- )
+-- BEGIN
+--     DECLARE done INT DEFAULT 0;
+--     DECLARE vroomID INT;
+--     DECLARE checkIn DATE;
+--     DECLARE checkOut DATE;
+--     DECLARE vguestID INT;
+--     DECLARE reservationID INT;
+--     DECLARE isAvailable BOOLEAN;
+--     DECLARE errMsg VARCHAR(255);
+--     DECLARE token CHAR(36);
+
+--     -- Cursor for rooms in cart
+--     DECLARE cartCursor CURSOR FOR
+--         SELECT RoomID, CheckInDate, CheckOutDate
+--         FROM CartRooms
+--         WHERE CartID = pCartID;
+
+--     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+--     -- Start transaction
+--     START TRANSACTION;
+
+--     -- Get GuestID into local variable (not @guestID)
+--     SELECT GuestID INTO vguestID
+--     FROM ReservationCarts
+--     WHERE CartID = pCartID
+--     FOR UPDATE;
+
+--     IF vguestID IS NULL THEN
+--         ROLLBACK;
+--         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid CartID: GuestID not found';
+--     END IF;
+
+--     OPEN cartCursor;
+--     read_loop: LOOP
+--         FETCH cartCursor INTO vroomID, checkIn, checkOut;
+--         IF done THEN
+--             LEAVE read_loop;
+--         END IF;
+
+--         -- Check availability
+--         CALL CheckRoomAvailability(vroomID, checkIn, checkOut, isAvailable);
+--         IF isAvailable = 0 THEN
+--             SET errMsg = CONCAT('Room ', vroomID, ' no longer available');
+--             ROLLBACK;
+--             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = errMsg;
+--         END IF;
+--     END LOOP;
+--     CLOSE cartCursor;
+
+--     -- before the insert
+--     SET token = UUID();
+
+--     -- insert with token
+--     INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, BookingToken)
+--     SELECT vguestID, 1, MIN(CheckInDate), MAX(CheckOutDate), pNumAdults, token
+--     FROM CartRooms
+--     WHERE CartID = pCartID;
+
+--     SET reservationID = LAST_INSERT_ID();
+
+--     -- Add rooms to ReservationRooms
+--     INSERT INTO ReservationRooms (ReservationID, RoomID)
+--     SELECT reservationID, RoomID
+--     FROM CartRooms
+--     WHERE CartID = pCartID;
+
+--     -- Create Payment
+--     INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
+--     SELECT reservationID, pPaymentMethodID, SUM(rt.BasePrice), 'pending'
+--     FROM CartRooms cr
+--     JOIN Rooms r ON cr.RoomID = r.RoomID
+--     JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
+--     WHERE cr.CartID = pCartID;
+
+--     -- Remove cart
+--     DELETE FROM CartRooms WHERE CartID = pCartID;
+--     DELETE FROM ReservationCarts WHERE CartID = pCartID;
+
+--     COMMIT;
+
+--     SELECT reservationID AS ReservationID;
+-- END$$
+
+-- DELIMITER ;
+
+DELIMITER $$
+
 CREATE PROCEDURE CheckoutCart(
     IN pCartID INT,
     IN pPaymentMethodID INT,
-    IN pNumAdults INT
+    IN pNumAdults INT,
+    IN pEmail VARCHAR(150),
+    IN pFirstName VARCHAR(100),
+    IN pLastName VARCHAR(100),
+    IN pPhone VARCHAR(30)
 )
 BEGIN
     DECLARE done INT DEFAULT 0;
@@ -229,7 +333,6 @@ BEGIN
     DECLARE errMsg VARCHAR(255);
     DECLARE token CHAR(36);
 
-    -- Cursor for rooms in cart
     DECLARE cartCursor CURSOR FOR
         SELECT RoomID, CheckInDate, CheckOutDate
         FROM CartRooms
@@ -237,63 +340,78 @@ BEGIN
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
-    -- Start transaction
     START TRANSACTION;
 
-    -- Get GuestID into local variable (not @guestID)
+    -- ✅ STEP 1: Create or reuse Guest
     SELECT GuestID INTO vguestID
-    FROM ReservationCarts
-    WHERE CartID = pCartID
-    FOR UPDATE;
+    FROM Guests
+    WHERE Email = pEmail
+    LIMIT 1;
 
     IF vguestID IS NULL THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid CartID: GuestID not found';
+        INSERT INTO Guests (Email, FirstName, LastName, PhoneContact)
+        VALUES (pEmail, pFirstName, pLastName, pPhone);
+
+        SET vguestID = LAST_INSERT_ID();
     END IF;
 
+    -- ✅ STEP 2: Validate cart exists
+    IF NOT EXISTS (SELECT 1 FROM ReservationCarts WHERE CartID = pCartID) THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid CartID';
+    END IF;
+
+    -- ✅ STEP 3: Validate availability again
     OPEN cartCursor;
+
     read_loop: LOOP
         FETCH cartCursor INTO vroomID, checkIn, checkOut;
         IF done THEN
             LEAVE read_loop;
         END IF;
 
-        -- Check availability
         CALL CheckRoomAvailability(vroomID, checkIn, checkOut, isAvailable);
+
         IF isAvailable = 0 THEN
             SET errMsg = CONCAT('Room ', vroomID, ' no longer available');
             ROLLBACK;
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = errMsg;
         END IF;
     END LOOP;
+
     CLOSE cartCursor;
 
-    -- before the insert
+    -- ✅ STEP 4: Create reservation
     SET token = UUID();
 
-    -- insert with token
-    INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, BookingToken)
-    SELECT vguestID, 1, MIN(CheckInDate), MAX(CheckOutDate), pNumAdults, token
+    INSERT INTO Reservations 
+        (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, BookingToken)
+    SELECT 
+        vguestID, 1, MIN(CheckInDate), MAX(CheckOutDate), pNumAdults, token
     FROM CartRooms
     WHERE CartID = pCartID;
 
     SET reservationID = LAST_INSERT_ID();
 
-    -- Add rooms to ReservationRooms
+    -- ✅ STEP 5: Attach rooms
     INSERT INTO ReservationRooms (ReservationID, RoomID)
     SELECT reservationID, RoomID
     FROM CartRooms
     WHERE CartID = pCartID;
 
-    -- Create Payment
+    -- ✅ STEP 6: Payment
     INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
-    SELECT reservationID, pPaymentMethodID, SUM(rt.BasePrice), 'pending'
+    SELECT 
+        reservationID, 
+        pPaymentMethodID, 
+        SUM(rt.BasePrice), 
+        'pending'
     FROM CartRooms cr
     JOIN Rooms r ON cr.RoomID = r.RoomID
     JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
     WHERE cr.CartID = pCartID;
 
-    -- Remove cart
+    -- ✅ STEP 7: Cleanup
     DELETE FROM CartRooms WHERE CartID = pCartID;
     DELETE FROM ReservationCarts WHERE CartID = pCartID;
 
@@ -303,7 +421,6 @@ BEGIN
 END$$
 
 DELIMITER ;
-
 
 -- =========================
 -- RESERVATION

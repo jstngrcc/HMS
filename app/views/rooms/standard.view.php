@@ -108,7 +108,7 @@
                     </div>
                 </div>
             </div>
-            <form action="/cart" method="POST"
+            <form action="/cart-submit" method="POST"
                 class="w-1/3 bg-white rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] p-6 flex flex-col gap-6">
                 <div class="justify-center text-black text-xl font-normal font-crimson">Check In - Check Out</div>
                 <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out" required
@@ -124,6 +124,7 @@
 
                 </div>
                 <div>
+                <!-- TODO: Add Children and Adults -->
                     <div id="guests-label" class="justify-center text-black text-xl font-normal font-crimson">
                         Guests (Max 2)
                     </div>
@@ -133,7 +134,7 @@
                         per
                         night.</p>
                 </div>
-                <input type="number" id="guests" placeholder="Guests" min="1" max="2" value="1" required
+                <input type="number" id="guests" name="adults" placeholder="Guests" min="1" max="2" value="1" required
                     class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
                 <div class="justify-center text-black text-xl font-normal font-crimson">Room Type</div>
                 <div class="flex items-center gap-4">

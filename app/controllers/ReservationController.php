@@ -6,11 +6,6 @@ require_once '../app/models/User.php';
 
 class ReservationController
 {
-    public function reservation()
-    {
-        require_once '../app/views/reservations/reservation.view.html';
-    }
-
     public function submit()
     {
 
@@ -108,6 +103,32 @@ class ReservationController
             // echo "roomID: " . $roomID . " (Type: " . gettype($roomID) . ")<br>";
             // echo "paymentMethod: " . $paymentMethod . " (Type: " . gettype($paymentMethod) . ")<br>";
             // echo "totalAmount: " . $totalAmount . " (Type: " . gettype($totalAmount) . ")<br>";
+        } else {
+            echo "Invalid request method.";
+        }
+    }
+
+    public function cart_submit()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $roomID = (int) $_POST['roomID'];
+            $guests = (int) $_POST['guests'];
+            $checkin = $_POST['checkin'];
+            $checkout = $_POST['checkout'];
+
+            // DEBUG: show input values and their data types
+            // echo "roomID: " . $roomID . " (Type: " . gettype($roomID) . ")";
+            // echo "guests: " . $guests . " (Type: " . gettype($guests) . ")";
+            // echo "checkin: " . $checkin . " (Type: " . gettype($checkin) . ")";
+            // echo "checkout: " . $checkout . " (Type: " . gettype($checkout) . ")";
+
+            if (!$roomID || !$guests || !$checkin || !$checkout) {
+                echo "All fields are required.";
+                return;
+            }
+
+            $reservationModel = new Reservation($GLOBALS['conn']);
+            $reservationModel->addRoomToCart($roomID, $checkin, $checkout, $guests);
         } else {
             echo "Invalid request method.";
         }
