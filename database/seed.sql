@@ -38,7 +38,8 @@ INSERT INTO Users (GuestID, RoleID, Email, PasswordHash) VALUES
 INSERT INTO Floors (FloorNumber) VALUES
 (1),
 (2),
-(3);
+(3),
+(4);
 
 INSERT INTO RoomTypes (RoomTypeName, BasePrice, BedTypeID, BedCount, MaxOccupancy) VALUES
 ('Standard Single', 1800.00, 2, 1, 2),
@@ -56,4 +57,7 @@ INSERT INTO Rooms (RoomNumber, FloorID, RoomTypeID) VALUES
 ('206',2,1),('207',2,2),('208',2,3),('209',2,1),('210',2,2),
 
 ('301',3,1),('302',3,1),('303',3,2),('304',3,2),('305',3,3),
-('306',3,1),('307',3,2),('308',3,3),('309',3,1),('310',3,2);
+('306',3,1),('307',3,2),('308',3,3),('309',3,1),('310',3,2),
+
+('401',4,4),('402',4,4),('403',4,5),('404',4,5),('405',4,6),
+('406',4,4),('407',4,5),('408',4,6),('409',4,4),('410',4,5);

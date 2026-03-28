@@ -17,12 +17,12 @@ class ReservationCart
     {
 
         $result = $this->conn->execute_query(
-            "INSERT INTO ReservationCarts (SessionGuestID, CreatedAt, ExpiresAt) VALUES (?, NOW(), NOW() + INTERVAL 30 MINUTE)",
+            "INSERT INTO ReservationCarts (SessionGuestID, CreatedAt, ExpiresAt) VALUES (?, NOW(), NOW() + INTERVAL 30 DAY)",
             [$sessionGuestID]
         );
 
         if ($result) {
-            return $this->conn->lastInsertId();
+            return $this->conn->insert_id;
         } else {
             return false;
         }

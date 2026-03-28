@@ -18,6 +18,10 @@ class SessionGuest {
             [$token]
         );
 
+        if ($result === false) {
+            return;
+        }
+
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
             if ($row["SessionGuestID"]) {
@@ -31,7 +35,7 @@ class SessionGuest {
         );
 
         if ($result->num_rows > 0) {
-            return $this->conn->lastInsertId();
+            return $this->conn->insert_id();
         }
 
     }

@@ -1,4 +1,10 @@
 <?php
+// DEBUG LINES
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
+// echo "<script>alert('$var');</script>";
+
 $lifetime = 60 * 60 * 24 * 30; // 30 days
 
 session_set_cookie_params([
@@ -15,6 +21,7 @@ require_once '../config/connect.php';
 require_once '../app/controllers/AuthController.php';
 require_once '../app/controllers/PagesController.php';
 require_once '../app/controllers/ReservationController.php';
+require_once '../app/controllers/SearchController.php';
 require_once '../app/controllers/CartController.php';
 require_once '../app/models/SessionGuest.php';
 require_once '../app/models/ReservationCart.php';
@@ -42,6 +49,7 @@ $cart = new CartController();
 $auth = new AuthController();
 $pages = new PagesController();
 $reservation = new ReservationController();
+$search = new SearchController();
 
 switch ($uri) {
     case '/':
@@ -54,6 +62,10 @@ switch ($uri) {
 
     case '/login':
         $auth->loginForm();
+        break;
+
+    case '/profile':
+        $auth->profile();
         break;
 
     case '/signup':
@@ -105,7 +117,7 @@ switch ($uri) {
         break;
 
     case '/search':
-        $pages->search();
+        $search->search();
         break;
 
     case '/standard':
@@ -126,6 +138,10 @@ switch ($uri) {
 
     case '/cart-submit':
         $cart->submit();
+        break;
+
+    case '/test':
+        require_once '../app/views/static/test.view.php';
         break;
 
     default:

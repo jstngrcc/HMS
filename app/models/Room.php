@@ -1,30 +1,35 @@
 <?php
 
-class Room {
+class Room
+{
 
     private $conn;
 
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->conn = $db;
     }
 
-    public function checkRoomAvailability($roomID, $checkin, $checkout) {
+    public function checkRoomAvailability($roomID, $checkin, $checkout)
+    {
         $this->conn->execute_query("CALL CheckRoomAvailability(?, ?, ?, @isAvailable)", [$roomID, $checkin, $checkout]);
-        
+
         $result = $this->conn->query("SELECT @isAvailable AS available;");
         $row = $result->fetch_assoc();
-        return (bool)$row['available'];
+        return (bool) $row['available'];
     }
 
-    public function getRoomPrice($roomID) {
+    public function getRoomPrice($roomID)
+    {
         $this->conn->execute_query("CALL GetRoomPrice(?, @price)", [$roomID]);
-        
+
         $result = $this->conn->query("SELECT @price AS price;");
         $row = $result->fetch_assoc();
-        return (float)$row['price'];
+        return (float) $row['price'];
     }
 
-    function calculateTotalAmount($roomTypeName, $basePrice, $checkin, $checkout, $numAdults = 1) {
+    function calculateTotalAmount($roomTypeName, $basePrice, $checkin, $checkout, $numAdults = 1)
+    {
         // 1. Calculate number of nights
         $checkinDate = new DateTime($checkin);
         $checkoutDate = new DateTime($checkout);
@@ -67,12 +72,55 @@ class Room {
         return round($totalAmount, 2);
     }
 
-    function getRoomTypeName($roomID) {
+    function getRoomTypeName($roomID)
+    {
+        // Call stored procedure
         $this->conn->execute_query("CALL GetRoomName(?, @name)", [$roomID]);
-        
-        $result = $this->conn->query("SELECT @name AS name;");
+
+        // 🔴 VERY IMPORTANT: clear remaining result sets
+        while ($this->conn->more_results() && $this->conn->next_result()) {
+            $this->conn->use_result();
+        }
+
+        // Fetch the output variable
+        $result = $this->conn->query("SELECT @name AS name");
         $row = $result->fetch_assoc();
-        return $row['name'];
+
+        return $row['name'] ?? null;
     }
+
+    public function searchAvailable($filters)
+    {
+        $stmt = $this->conn->prepare("CALL SearchAvailableRooms(?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param(
+            "sssssss",
+            $filters['checkin'],
+            $filters['checkout'],
+            $filters['adults'],
+            $filters['children'],
+            $filters['room'],
+            $filters['room_type'],
+            $filters['beds']
+        );
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $rooms = [];
+        while ($row = $result->fetch_assoc()) {
+            $rooms[] = $row;
+        }
+
+        // Clear any remaining result sets — prevents "second call works" problem
+        while ($this->conn->more_results() && $this->conn->next_result()) {
+            $extraResult = $this->conn->use_result();
+            if ($extraResult instanceof mysqli_result) {
+                $extraResult->free();
+            }
+        }
+
+        return $rooms;
+    }
+
 }
 ?>

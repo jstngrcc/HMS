@@ -176,6 +176,64 @@ END$$
 
 DELIMITER ;
 
+DELIMITER $$
+
+CREATE PROCEDURE SearchAvailableRooms(
+    IN pCheckIn DATE,
+    IN pCheckOut DATE,
+    IN pAdults INT,
+    IN pChildren INT,
+    IN pRoom VARCHAR(50),
+    IN pRoomType INT,
+    IN pBeds INT
+)
+BEGIN
+    SELECT r.RoomNumber, rt.RoomTypeName, rt.BasePrice,
+           rt.MaxOccupancy, rt.BedCount, bt.BedName
+    FROM Rooms r
+    JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
+    LEFT JOIN BedTypes bt ON rt.BedTypeID = bt.BedTypeID
+    WHERE r.Status = 'available'
+
+    -- Adults + Children (total occupancy)
+    AND (
+        pAdults IS NULL OR
+        rt.MaxOccupancy >= (pAdults + IFNULL(pChildren, 0))
+    )
+
+    -- Room type (dropdown)
+    AND (pRoomType IS NULL OR rt.RoomTypeID = pRoomType)
+
+    -- Beds filter
+    AND (pBeds IS NULL OR rt.BedCount >= pBeds)
+
+    -- Room radio (example mapping)
+    AND (
+        pRoom IS NULL OR
+        (pRoom = 'single' AND rt.BedCount = 1) OR
+        (pRoom = 'double' AND rt.BedCount >= 2)
+    )
+
+    -- Availability
+    AND (
+        pCheckIn IS NULL OR pCheckOut IS NULL OR
+        r.RoomID NOT IN (
+            SELECT rr.RoomID
+            FROM ReservationRooms rr
+            JOIN Reservations res ON rr.ReservationID = res.ReservationID
+            WHERE NOT (
+                res.CheckOutDate <= pCheckIn OR
+                res.CheckInDate >= pCheckOut
+            )
+        )
+    )
+
+    ORDER BY rt.BasePrice ASC;
+
+END$$
+
+DELIMITER ;
+
 -- =========================
 -- CARTS
 -- =========================
