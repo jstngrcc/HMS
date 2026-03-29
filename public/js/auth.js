@@ -152,4 +152,47 @@ $(document).ready(function () {
             }
         });
     });
+    // ---------- UPDATE PROFILE ----------
+    $("#update-form").submit(function (e) {
+        e.preventDefault();
+
+        let pass = $("#password").val();
+
+        if (pass.length > 0 && !validatePassword()) {
+            showToast("Fix password errors first.", "error");
+            return;
+        }
+
+        $.ajax({
+            url: "/update-submit",
+            type: "POST",
+            data: $(this).serialize(),
+            dataType: "json",
+            success: function (response) {
+                console.log(response);
+                if (!response.success) {
+                    showToast(response.error, "error");
+                    console.log(response.error);
+                } else {
+                    showToast(response.message, "success");
+                    console.log(response.message);
+                }
+            },
+            error: function () {
+                showToast("Server error. Try again.", "error");
+            }
+        });
+    });
+    $("#togglePassword").click(function () {
+        const input = $("#password");
+        const icon = $(this).find("img");
+
+        if (input.attr("type") === "password") {
+            input.attr("type", "text");
+            icon.attr("src", "/assets/icons/eye-on.svg"); // eye ON
+        } else {
+            input.attr("type", "password");
+            icon.attr("src", "/assets/icons/eye-off.svg"); // eye OFF
+        }
+    });
 });

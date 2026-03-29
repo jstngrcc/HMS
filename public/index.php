@@ -92,6 +92,10 @@ switch ($uri) {
         $auth->signup();
         break;
 
+    case '/update-submit':
+        $auth->updateProfile();
+        break;
+
     case '/logout':
         $auth->logout();
         break;

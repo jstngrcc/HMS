@@ -399,7 +399,7 @@
             workouts while traveling.
           </p>
           <div class="flex items-center space-x-2 justify-end">
-            <h6 class="font-semibold" id="testimonial-autor">Shan L. —</h6>
+            <h6 class="font-semibold" id="testimonial-author">Shan L. —</h6>
             <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
             <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
             <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">

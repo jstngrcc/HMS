@@ -141,7 +141,6 @@ class AuthController
         exit;
     }
 
-
     public function resetPasswordForm()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -218,6 +217,94 @@ class AuthController
             $userModel->deleteResetToken($token);
 
             echo json_encode(["success" => true, "message" => "Password updated successfully!", "redirect" => "/registration"]);
+            exit;
+        }
+    }
+
+    public function updateProfile()
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(["success" => false, "error" => "Invalid request."]);
+            exit;
+        }
+
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            echo json_encode(["success" => false, "error" => "Unauthorized."]);
+            exit;
+        }
+
+        $userID = $_SESSION['logged_in_user_id'];
+
+        $fname = trim($_POST['fname'] ?? '');
+        $lname = trim($_POST['lname'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $birthDate = trim($_POST['birthDate'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $currentPassword = trim($_POST['passwordc'] ?? '');
+        $newPassword = trim($_POST['password'] ?? '');
+
+        try {
+
+            $userModel = new User($GLOBALS['conn']);
+            $user = $userModel->getUserByID($userID);
+
+            if (!$user) {
+                echo json_encode(["success" => false, "error" => "User not found."]);
+                exit;
+            }
+
+            // Only check password if changing sensitive info
+            $requiresPassword = !empty($newPassword);
+
+            if ($requiresPassword) {
+                if (empty($currentPassword) || !password_verify($currentPassword, $user->PasswordHash)) {
+                    echo json_encode(["success" => false, "error" => "Current password is incorrect."]);
+                    exit;
+                }
+            }
+
+            // Update fields individually if they have values
+            if (!empty($fname))
+                $userModel->updateFirstName($fname);
+            if (!empty($lname))
+                $userModel->updateLastName($lname);
+            if (!empty($phone))
+                $userModel->updatePhoneNo($phone);
+            if (!empty($birthDate))
+                $userModel->updateBirthdate($birthDate);
+            if (!empty($email))
+                $userModel->updateEmail($email);
+
+            if (!empty($newPassword)) {
+                if (
+                    strlen($newPassword) < 8 ||
+                    !preg_match('/[A-Z]/', $newPassword) ||
+                    !preg_match('/[a-z]/', $newPassword) ||
+                    !preg_match('/[0-9]/', $newPassword) ||
+                    !preg_match('/[\W]/', $newPassword)
+                ) {
+                    echo json_encode(["success" => false, "error" => "Weak password."]);
+                    exit;
+                }
+
+                $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+
+                $userModel->updatePassword($hash);
+            }
+
+            echo json_encode([
+                "success" => true,
+                "message" => "Profile updated successfully!"
+            ]);
+            exit;
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "error" => $e->getMessage()
+            ]);
             exit;
         }
     }

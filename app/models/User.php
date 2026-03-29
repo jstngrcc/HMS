@@ -79,16 +79,188 @@ class User
         }
     }
 
-    public function updatePassword($email, $newPassword)
+    public function updatePassword($newPassword)
     {
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            throw new Exception("Unauthorized: User not logged in.");
+        }
+
+        $userID = $_SESSION['logged_in_user_id'];
+
         $result = $this->conn->execute_query(
-            "UPDATE Users SET PasswordHash = ? WHERE Email = ?",
-            [$newPassword, $email]
+            "UPDATE Users SET PasswordHash = ? WHERE UserID = ?",
+            [$newPassword, $userID]
         );
 
         if (!$result) {
-            throw new Exception("Failed to update password " . $this->conn->error);
+            throw new Exception("Failed to update password: " . $this->conn->error);
         }
+
+        return true;
+    }
+
+    public function updateFirstName($newFirstName)
+    {
+
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            throw new Exception("Unauthorized: User not logged in.");
+        }
+
+        $userID = $_SESSION['logged_in_user_id'];
+
+        $result = $this->conn->execute_query(
+            "SELECT GuestID FROM Users WHERE UserID = ?",
+            [$userID]
+        );
+
+        if (!$result || $result->num_rows === 0) {
+            throw new Exception("User not found.");
+        }
+
+        $user = $result->fetch_assoc();
+        $guestID = $user['GuestID'];
+
+        $update = $this->conn->execute_query(
+            "UPDATE Guests SET FirstName = ? WHERE GuestID = ?",
+            [$newFirstName, $guestID]
+        );
+
+        if (!$update) {
+            throw new Exception("Failed to update first name: " . $this->conn->error);
+        }
+
+        $_SESSION['logged_in_user_name'] = $newFirstName;
+
+        return true;
+    }
+
+    public function updateLastName($newLastName)
+    {
+
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            throw new Exception("Unauthorized: User not logged in.");
+        }
+
+        $userID = $_SESSION['logged_in_user_id'];
+
+        $result = $this->conn->execute_query(
+            "SELECT GuestID FROM Users WHERE UserID = ?",
+            [$userID]
+        );
+
+        if (!$result || $result->num_rows === 0) {
+            throw new Exception("User not found.");
+        }
+
+        $user = $result->fetch_assoc();
+        $guestID = $user['GuestID'];
+
+        $update = $this->conn->execute_query(
+            "UPDATE Guests SET LastName = ? WHERE GuestID = ?",
+            [$newLastName, $guestID]
+        );
+
+        if (!$update) {
+            throw new Exception("Failed to update last name: " . $this->conn->error);
+        }
+
+        return true;
+    }
+
+    public function updatePhoneNo($newPhoneNo)
+    {
+
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            throw new Exception("Unauthorized: User not logged in.");
+        }
+
+        $userID = $_SESSION['logged_in_user_id'];
+
+        $result = $this->conn->execute_query(
+            "SELECT GuestID FROM Users WHERE UserID = ?",
+            [$userID]
+        );
+
+        if (!$result || $result->num_rows === 0) {
+            throw new Exception("User not found.");
+        }
+
+        $user = $result->fetch_assoc();
+        $guestID = $user['GuestID'];
+
+        $update = $this->conn->execute_query(
+            "UPDATE Guests SET PhoneContact = ? WHERE GuestID = ?",
+            [$newPhoneNo, $guestID]
+        );
+
+        if (!$update) {
+            throw new Exception("Failed to update phone contact: " . $this->conn->error);
+        }
+
+        return true;
+    }
+
+    public function updateBirthdate($newBirthdate)
+    {
+
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            throw new Exception("Unauthorized: User not logged in.");
+        }
+
+        $userID = $_SESSION['logged_in_user_id'];
+
+        $result = $this->conn->execute_query(
+            "SELECT GuestID FROM Users WHERE UserID = ?",
+            [$userID]
+        );
+
+        if (!$result || $result->num_rows === 0) {
+            throw new Exception("User not found.");
+        }
+
+        $user = $result->fetch_assoc();
+        $guestID = $user['GuestID'];
+
+        $update = $this->conn->execute_query(
+            "UPDATE Guests SET BirthDate = ? WHERE GuestID = ?",
+            [$newBirthdate, $guestID]
+        );
+
+        if (!$update) {
+            throw new Exception("Failed to update birthdate: " . $this->conn->error);
+        }
+
+        return true;
+    }
+
+    public function updateEmail($newEmail)
+    {
+
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            throw new Exception("Unauthorized: User not logged in.");
+        }
+
+        $userID = $_SESSION['logged_in_user_id'];
+
+        $check = $this->conn->execute_query(
+            "SELECT UserID FROM Users WHERE Email = ?",
+            [$newEmail]
+        );
+
+        if ($check && $check->num_rows > 0) {
+            throw new Exception("Email already in use.");
+        }
+
+        $result = $this->conn->execute_query(
+            "UPDATE Users SET Email = ? WHERE UserID = ?",
+            [$newEmail, $userID]
+        );
+
+        if (!$result) {
+            throw new Exception("Failed to update email: " . $this->conn->error);
+        }
+
+        return true;
     }
 
     public function updatePasswordByID($userID, $newPassword)
@@ -172,6 +344,52 @@ class User
             "DELETE FROM PasswordResets WHERE Token = ?",
             [$token]
         );
+    }
+
+    public function getUserByID($userID)
+    {
+        $result = $this->conn->execute_query(
+            "SELECT * FROM Users WHERE UserID = ?",
+            [$userID]
+        );
+
+        return $result->fetch_object();
+    }
+
+    public function updateFullName($fname, $lname)
+    {
+        $userID = $_SESSION['logged_in_user_id'];
+
+        $result = $this->conn->execute_query(
+            "UPDATE Guests g
+            JOIN Users u ON g.GuestID = u.GuestID
+            SET g.FirstName = ?, g.LastName = ?
+            WHERE u.UserID = ?",
+            [$fname, $lname, $userID]
+        );
+
+        if (!$result) {
+            throw new Exception("Failed to update name.");
+        }
+
+        $_SESSION['logged_in_user_name'] = $fname;
+    }
+
+    public function updateGuestDetails($phone, $birthDate)
+    {
+        $userID = $_SESSION['logged_in_user_id'];
+
+        $result = $this->conn->execute_query(
+            "UPDATE Guests g
+            JOIN Users u ON g.GuestID = u.GuestID
+            SET g.PhoneContact = ?, g.BirthDate = ?
+            WHERE u.UserID = ?",
+            [$phone, $birthDate, $userID]
+        );
+
+        if (!$result) {
+            throw new Exception("Failed to update guest details.");
+        }
     }
 }
 
