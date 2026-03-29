@@ -76,18 +76,50 @@
       </div>
     </div>
 
-    <!-- TODO: Add rooms button -->
     <footer class="bg-[rgba(0,0,0,0.40)] flex justify-center p-10 gap-8 items-center">
-      <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out"
-        class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
-      <button id="openRooms"
-        class="text-stone-600 font-roboto font-semibold text-[16px] leading-normal rounded-sm bg-[#EEE2CB] p-3">
-        ROOMS
-      </button>
-      <!-- TODO: Add search button -->
-      <button class="text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3">
-        SEARCH ROOMS
-      </button>
+      <form method="POST" action="/search">
+        <div class="flex gap-2 p-5">
+
+          <!-- Check-In / Check-Out -->
+          <div class="relative">
+            <span class="absolute left-2 top-[13.5px] transform text-gray-400">
+              <img src="/assets/icons/calendar.svg" alt="calendar">
+            </span>
+            <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out" required
+              class="bg-white rounded-sm p-2 pl-9 text-crimson-600 font-crimson border border-gray-300 "
+              value="<?= isset($_POST['checkin']) ? htmlspecialchars($_POST['checkin']) : '' ?>">
+          </div>
+
+          <!-- Adults -->
+          <div class="relative">
+            <span class="absolute left-2 top-[13.5px] transform text-gray-400">
+              <img src="/assets/icons/people.svg" alt="people">
+            </span>
+            <input type="number" id="adults" name="adults" placeholder="No. of Adults" min="0"
+              class="bg-white rounded-sm pl-9 p-2 text-crimson-600 font-crimson border border-gray-300 "
+              value="<?= !empty($_POST['adults']) ? (int) $_POST['adults'] : '' ?>">
+          </div>
+
+          <!-- Children -->
+          <div class="relative">
+            <span class="absolute left-2 top-[13.5px] transform text-gray-400">
+              <img src="/assets/icons/people.svg" alt="people">
+            </span>
+            <input type="number" id="children" name="children" placeholder="No. of Children" min="0"
+              class="bg-white rounded-sm pl-9 p-2 text-crimson-600 font-crimson border border-gray-300 "
+              value="<?= !empty($_POST['children']) ? (int) $_POST['children'] : '' ?>">
+          </div>
+
+          <!-- Submit -->
+          <!-- TODO: hover -->
+          <div class="flex items-center">
+            <button type="submit"
+              class="text-white font-roboto text-[14px] font-semibold leading-normal rounded-sm bg-[#714623] p-2.5">
+              SEARCH ROOMS
+            </button>
+          </div>
+        </div>
+      </form>
     </footer>
 
     <!-- Hidden Rooms -->
