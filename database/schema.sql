@@ -2,6 +2,20 @@ CREATE DATABASE IF NOT EXISTS HMS;
 USE HMS;
 
 -- =========================
+-- LOGS
+-- =========================
+
+CREATE TABLE IF NOT EXISTS Logs (
+    LogID INT AUTO_INCREMENT PRIMARY KEY,
+    TableName VARCHAR(100) NOT NULL,
+    OperationType ENUM('INSERT','UPDATE','DELETE') NOT NULL,
+    RecordID INT NULL,
+    OldData JSON NULL,
+    NewData JSON NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =========================
 -- ROLES
 -- =========================
 CREATE TABLE IF NOT EXISTS Roles (
