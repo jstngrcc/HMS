@@ -1,3 +1,25 @@
+<?php
+$typeMap = [
+    'standard single' => 'single',
+    'standard double' => 'double',
+    'deluxe single'   => 'single',
+    'deluxe double'   => 'double',
+    'suite'           => 'double', // or whatever mapping you need
+];
+
+$roomTypeRaw = strtolower($_GET['type'] ?? 'single'); // make lowercase
+$roomType = $typeMap[$roomTypeRaw] ?? 'single'; // map to single/double
+$roomNumber = $_GET['room'] ?? null;
+
+// Optional: pre-fill form values based on room type
+$roomBasePrice = $roomType === 'single' ? 1800 : 2700;
+$maxGuests = $roomType === 'single' ? 2 : 3;
+
+// Pre-fill the radio buttons
+$singleChecked = $roomType === 'single' ? 'checked' : '';
+$doubleChecked = $roomType === 'double' ? 'checked' : '';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -40,34 +62,39 @@
             </div>
         </div>
 
-<!-- Right Side -->
-<div class="bg-[#F7F7F7] rounded-r-sm shadow-lg w-150 p-6 flex flex-col gap-4 relative">
-    <button id="close-modal" class="absolute top-1 right-2 text-gray-500 hover:text-gray-800 font-bold">×</button>
-    <div class="text-black text-xl font-normal font-crimson">1 item in your cart</div>
-    <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
-    <div class="flex flex-col gap-2">
-        <div class="flex justify-between">
-            <h6 class="font-roboto font-semibold text-black">Room cost per Night:</h6>
-            <p id="modal-room-cost" class="font-roboto font-normal text-black">₱1,800.00</p>
+        <!-- Right Side -->
+        <div class="bg-[#F7F7F7] rounded-r-sm shadow-lg w-150 p-6 flex flex-col gap-4 relative">
+            <button id="close-modal"
+                class="absolute top-1 right-2 text-gray-500 hover:text-gray-800 font-bold">×</button>
+            <div class="text-black text-xl font-normal font-crimson">1 item in your cart</div>
+            <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
+            <div class="flex flex-col gap-2">
+                <div class="flex justify-between">
+                    <h6 class="font-roboto font-semibold text-black">Room cost per Night:</h6>
+                    <p id="modal-room-cost" class="font-roboto font-normal text-black">₱1,800.00</p>
+                </div>
+                <div class="flex justify-between">
+                    <h6 class="font-roboto font-semibold text-black">Night Discount:</h6>
+                    <p id="modal-night-discount" class="font-roboto font-normal text-black">₱0.00</p>
+                </div>
+                <div class="flex justify-between">
+                    <h6 class="font-roboto font-semibold text-black">Additional Guest Charge:</h6>
+                    <p id="modal-guest-charge" class="font-roboto font-normal text-black">₱0.00</p>
+                </div>
+                <div class="flex justify-between">
+                    <h6 class="font-roboto font-semibold text-black">Total (12% tax incl.)</h6>
+                    <p id="modal-total" class="font-roboto font-normal text-black">₱2,016.00</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-4">
+                <button id="continue-browsing"
+                    class="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded">Continue
+                    Browsing</button>
+                <button id="proceed-checkout"
+                    class="bg-[#c39c4d] hover:bg-[#b28a44] text-white font-semibold px-4 py-2 rounded">Proceed to
+                    Checkout</button>
+            </div>
         </div>
-        <div class="flex justify-between">
-            <h6 class="font-roboto font-semibold text-black">Night Discount:</h6>
-            <p id="modal-night-discount" class="font-roboto font-normal text-black">₱0.00</p>
-        </div>
-        <div class="flex justify-between">
-            <h6 class="font-roboto font-semibold text-black">Additional Guest Charge:</h6>
-            <p id="modal-guest-charge" class="font-roboto font-normal text-black">₱0.00</p>
-        </div>
-        <div class="flex justify-between">
-            <h6 class="font-roboto font-semibold text-black">Total (12% tax incl.)</h6>
-            <p id="modal-total" class="font-roboto font-normal text-black">₱2,016.00</p>
-        </div>
-    </div>
-    <div class="flex justify-end gap-3 mt-4">
-        <button id="continue-browsing" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded">Continue Browsing</button>
-        <button id="proceed-checkout" class="bg-[#c39c4d] hover:bg-[#b28a44] text-white font-semibold px-4 py-2 rounded">Proceed to Checkout</button>
-    </div>
-</div>
     </div>
 </div>
 
@@ -111,7 +138,7 @@
             <form action="/cart-submit" method="POST"
                 class="w-1/3 bg-white rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] p-6 flex flex-col gap-6">
                 <div class="justify-center text-black text-xl font-normal font-crimson">Check In - Check Out</div>
-                <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out" required
+                <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out" value="<?= htmlspecialchars($_GET['checkin'] ?? '') ?>" required
                     class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
                 <div>
                     <div class="justify-center text-zinc-500 text-lg font-normal font-crimson">Time-In 12:00 PM –
@@ -124,7 +151,7 @@
 
                 </div>
                 <div>
-                <!-- TODO: Add Children and Adults -->
+                    <!-- TODO: Add Children and Adults -->
                     <div id="guests-label" class="justify-center text-black text-xl font-normal font-crimson">
                         Guests (Max 2)
                     </div>
@@ -134,32 +161,33 @@
                         per
                         night.</p>
                 </div>
-                <input type="number" id="guests" name="adults" placeholder="Guests" min="1" max="2" value="1" required
+                <input type="number" id="guests" name="adults" placeholder="Guests" min="1" max="<?= $maxGuests ?>" value="1" required
                     class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
                 <div class="justify-center text-black text-xl font-normal font-crimson">Room Type</div>
                 <div class="flex items-center gap-4">
                     <label class="relative flex items-center cursor-pointer">
                         <input type="radio" name="room" value="single" data-base-price="1800" class="peer sr-only"
-                            checked required>
+                            <?= $singleChecked ?> required>
                         <div class="w-5 h-5 border-2 border-gray-400 rounded-full shrink-0
-                    peer-checked:border-[#c39c4d] peer-checked:bg-[#c39c4d] transition-all"></div>
+        peer-checked:border-[#c39c4d] peer-checked:bg-[#c39c4d] transition-all"></div>
                         <span class="ml-2 text-gray-700 font-roboto">Single</span>
                     </label>
 
                     <label class="relative flex items-center cursor-pointer">
-                        <input type="radio" name="room" data-base-price="2700" value="double" class="peer sr-only">
+                        <input type="radio" name="room" value="double" data-base-price="2700" class="peer sr-only"
+                            <?= $doubleChecked ?>>
                         <div class="w-5 h-5 border-2 border-gray-400 rounded-full shrink-0
-                    peer-checked:border-[#c39c4d] peer-checked:bg-[#c39c4d] transition-all"></div>
+        peer-checked:border-[#c39c4d] peer-checked:bg-[#c39c4d] transition-all"></div>
                         <span class="ml-2 text-gray-700 font-roboto">Double</span>
                     </label>
                 </div>
                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
                 <div class="justify-center text-zinc-500 text-xl font-normal font-crimson">Room Rate (per night)
                 </div>
-                <div id="room-price" class="justify-center text-black text-xl font-normal font-crimson">₱1,800</div>
+                <div id="room-price" class="justify-center text-black text-xl font-normal font-crimson">₱<?= number_format($roomBasePrice) ?></div>
                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
                 <div class="justify-center text-zinc-500 text-xl font-normal font-crimson">Subtotal</div>
-                <div id="subtotal-price" class="justify-center text-black text-xl font-normal font-crimson">₱1,800
+                <div id="subtotal-price" class="justify-center text-black text-xl font-normal font-crimson">₱<?= number_format($roomBasePrice) ?>
                 </div>
                 <button type="submit" class="text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#c39c4d] p-3 
            hover:bg-[#b28a44] transition-colors duration-300">

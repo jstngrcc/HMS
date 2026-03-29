@@ -172,13 +172,17 @@
                                             GUESTS</h3>
                                         <p>Max Occupancy: <?= htmlspecialchars($room['MaxOccupancy']) ?></p>
                                     </div>
-                                    <p class="font-crimson text-2xl">₱<?= htmlspecialchars($room['BasePrice']) ?>/Per Night</p>
+                                    <p class="font-crimson text-2xl">₱<?= htmlspecialchars($room['BasePrice']) ?>/Per Night
+                                    </p>
                                 </div>
 
                                 <div class="flex justify-end">
                                     <button
                                         class="text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3">
-                                        VIEW MORE
+                                        <a
+                                            href="/room/standard?type=<?= urlencode($room['RoomTypeName']) ?>&room=<?= $room['RoomNumber'] ?>&checkin=<?= urlencode($_POST['checkin'] ?? '') ?>">
+                                            VIEW MORE
+                                        </a>
                                     </button>
                                 </div>
                             </div>

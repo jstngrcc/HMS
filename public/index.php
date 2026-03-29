@@ -120,15 +120,15 @@ switch ($uri) {
         $search->search();
         break;
 
-    case '/standard':
+    case '/room/standard':
         $pages->standard();
         break;
 
-    case '/deluxe':
+    case '/room/deluxe':
         $pages->deluxe();
         break;
 
-    case '/suite':
+    case '/room/suite':
         $pages->suite();
         break;
 
