@@ -44,7 +44,7 @@ class User
         }
     }
 
-    public function createGuest($email, $firstName, $lastName, $phone)
+    public function createGuest($email, $firstName, $lastName, $phone, $birthDate)
     {
         // Check if guest already exists
         $existingGuest = $this->getGuestByEmail($email);
@@ -54,8 +54,8 @@ class User
 
         // Create new guest
         $this->conn->execute_query(
-            "CALL CreateGuest(?, ?, ?, ?, @newGuestID)",
-            [$email, $firstName, $lastName, $phone]
+            "CALL CreateGuest(?, ?, ?, ?, ?, @newGuestID)",
+            [$email, $firstName, $lastName, $phone, $birthDate]
         );
 
         $result = $this->conn->query("SELECT @newGuestID AS GuestID;");
@@ -63,11 +63,11 @@ class User
         return $result->fetch_assoc()['GuestID'];
     }
 
-    public function createGuestUser($email, $emailGuest, $password, $firstName, $lastName, $phone)
+    public function createGuestUser($email, $emailGuest, $password, $firstName, $lastName, $phone, $birthDate)
     {
         $result = $this->conn->execute_query(
-            "CALL CreateGuestUser(?, ?, ?, ?, ?, ?)",
-            [$email, $emailGuest, $password, $firstName, $lastName, $phone]
+            "CALL CreateGuestUser(?, ?, ?, ?, ?, ?, ?)",
+            [$email, $emailGuest, $password, $firstName, $lastName, $phone, $birthDate]
         );
 
         if (!$result) {

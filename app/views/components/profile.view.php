@@ -26,7 +26,7 @@
                 Bookings
             </a>
 
-            <a href="/logout" class="block px-4 py-2 hover:bg-gray-100">
+            <a href="/logout" id="logoutBtn" class="block px-4 py-2 hover:bg-gray-100">
                 Logout
             </a>
 
@@ -44,3 +44,4 @@
         </button>
     </a>
 <?php endif; ?>
+<script src="/js/auth.js"></script>

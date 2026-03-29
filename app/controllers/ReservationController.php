@@ -20,8 +20,9 @@ class ReservationController
             $fname = $_POST['fname'];
             $lname = $_POST['lname'];
             $phone = $_POST['phone'];
+            $birthDate = $_POST['birthDate'];
 
-            if (empty($email) || empty($fname) || empty($lname) || empty($phone)) {
+            if (empty($email) || empty($fname) || empty($lname) || empty($phone) || empty($birthDate)) {
                 echo "Please fill in all required fields.";
                 return;
             }

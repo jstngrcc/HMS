@@ -12,7 +12,8 @@ CREATE PROCEDURE CreateGuestUser(
     IN pPasswordHash VARCHAR(255),
     IN pFirstName VARCHAR(100),
     IN pLastName VARCHAR(100),
-    IN pPhone VARCHAR(20)
+    IN pPhone VARCHAR(20),
+    IN pBirthDate DATE
 )
 BEGIN
 
@@ -22,9 +23,9 @@ BEGIN
 
     -- Step 1: Create Guest FIRST
     INSERT INTO Guests
-    (Email, FirstName, LastName, PhoneContact)
+    (Email, FirstName, LastName, PhoneContact, BirthDate)
     VALUES
-    (pEmailGuest, pFirstName, pLastName, pPhone);
+    (pEmailGuest, pFirstName, pLastName, pPhone, pBirthDate);
 
     SET newGuestID = LAST_INSERT_ID();
 
@@ -68,11 +69,12 @@ CREATE PROCEDURE CreateGuest(
     IN pFirstName VARCHAR(100),
     IN pLastName VARCHAR(100),
     IN pPhone VARCHAR(20),
+    IN pBirthDate DATE,
     OUT newGuestID INT
 )
 BEGIN
-    INSERT INTO Guests (Email, FirstName, LastName, PhoneContact)
-    VALUES (pEmail, pFirstName, pLastName, pPhone);
+    INSERT INTO Guests (Email, FirstName, LastName, PhoneContact, BirthDate)
+    VALUES (pEmail, pFirstName, pLastName, pPhone, pBirthDate);
 
     SET newGuestID = LAST_INSERT_ID();
 END$$
@@ -378,7 +380,8 @@ CREATE PROCEDURE CheckoutCart(
     IN pEmail VARCHAR(150),
     IN pFirstName VARCHAR(100),
     IN pLastName VARCHAR(100),
-    IN pPhone VARCHAR(30)
+    IN pPhone VARCHAR(30),
+    IN pBirthDate DATE
 )
 BEGIN
     DECLARE done INT DEFAULT 0;
@@ -407,8 +410,8 @@ BEGIN
     LIMIT 1;
 
     IF vguestID IS NULL THEN
-        INSERT INTO Guests (Email, FirstName, LastName, PhoneContact)
-        VALUES (pEmail, pFirstName, pLastName, pPhone);
+        INSERT INTO Guests (Email, FirstName, LastName, PhoneContact, BirthDate)
+        VALUES (pEmail, pFirstName, pLastName, pPhone, pBirthDate);
 
         SET vguestID = LAST_INSERT_ID();
     END IF;

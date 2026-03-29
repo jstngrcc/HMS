@@ -29,7 +29,7 @@
 
         <h2 class="font-bold mt-4">1. Information We Collect</h2>
         <p class="text-gray-700 font-poppins">
-            We may collect personal information such as your name, email address, phone number, and payment information
+            We may collect personal information such as your name, email address, phone number, birthdate, and payment information
             when you use our services.
         </p>
 

@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Text&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/output.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 
 <body>
@@ -41,6 +43,10 @@
                     <label for="phone">Phone Contact: </label>
                     <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" name="phone" placeholder="000-000-0000"
                         required class="border border-gray-300 p-2 rounded w-full text-black bg-white">
+                    <br>
+                    <label for="birthDate">Birthday: </label>
+                    <input type="text" id="birthDate" name="birthDate" placeholder="Select your birthdate"
+                        class="border border-gray-300 p-2 rounded w-full text-black bg-white">
                     <br>
                     <label for="email">Email: </label>
                     <input type="email" name="email" required
@@ -105,6 +111,7 @@
     <?php require_once __DIR__ . '/../components/footer.view.php'; ?>
     <script src="/js/signup.js"></script>
     <script src="/js/login.js"></script>
+    <script src="/js/flatpickr.js"></script>
 </body>
 
 </html>

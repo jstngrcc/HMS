@@ -443,6 +443,7 @@
 
   <script src="/js/testimonials.js"></script>
   <script src="/js/gallery.js"></script>
+  <script src="/js/auth.js"></script>
   <script src="/js/daterange.js"></script>
   <script>
     const openBtn = document.getElementById("openRooms");

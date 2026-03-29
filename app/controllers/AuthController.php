@@ -18,14 +18,30 @@ class AuthController
         require_once '../app/views/auth/forgot_password.view.php';
     }
 
+    public function profile()
+    {
+        require_once '../app/views/auth/profile.view.php';
+    }
+
     public function showResetForm($token = null)
     {
         if (!$token) {
-            echo "Invalid or missing token.";
+            // Render the auth view and show toast for invalid token
+            require_once '../app/views/auth/auth.view.php';
+            echo "<script>showToast('Invalid or missing token.', 'error');</script>";
             return;
         }
-        // You could also check if token exists in DB and is not expired here
 
+        $userModel = new User($GLOBALS['conn']);
+        $user = $userModel->getUserByResetToken($token);
+
+        if (!$user) {
+            require_once '../app/views/auth/auth.view.php';
+            echo "<script>showToast('Token is invalid or expired.', 'error');</script>";
+            return;
+        }
+
+        // Token is valid — show reset password form
         require_once '../app/views/auth/reset_password.view.php';
     }
 
@@ -36,21 +52,40 @@ class AuthController
             $password = trim($_POST['password']);
 
             if (empty($email) || empty($password)) {
-                echo "Please enter both email and password.";
+                echo json_encode([
+                    "success" => false,
+                    "error" => "Please enter both email and password."
+                ]);
                 return;
             }
 
-            $userModel = new User($GLOBALS['conn']);
-            $user = $userModel->getUserByEmail($email);
+            try {
+                $userModel = new User($GLOBALS['conn']);
+                $user = $userModel->getUserByEmail($email);
 
-            if ($user && password_verify($password, $user->PasswordHash)) {
-                $_SESSION['logged_in_user_id'] = $user->UserID;
-                $_SESSION['logged_in_user_name'] = $user->FirstName;
+                if ($user && password_verify($password, $user->PasswordHash)) {
+                    $_SESSION['logged_in_user_id'] = $user->UserID;
+                    $_SESSION['logged_in_user_name'] = $user->FirstName;
 
-                header('Location: /home');
-                exit;
-            } else {
-                echo "Invalid email or password.";
+                    echo json_encode([
+                        "success" => true,
+                        "message" => "Login successful!",
+                        "redirect" => "/home"
+                    ]);
+                    return;
+                } else {
+                    echo json_encode([
+                        "success" => false,
+                        "error" => "Invalid email or password."
+                    ]);
+                }
+            } catch (Exception $e) {
+                error_log($e->getMessage());
+
+                echo json_encode([
+                    "success" => false,
+                    "error" => "Something went wrong. Please try again."
+                ]);
             }
         }
     }
@@ -61,92 +96,91 @@ class AuthController
             $fname = trim($_POST['fname']);
             $lname = trim($_POST['lname']);
             $phone = trim($_POST['phone']);
+            $birthDate = trim($_POST['birthDate']);
             $email = trim($_POST['email']);
             $password = trim($_POST['password']);
             $passwordr = trim($_POST['passwordr']);
 
-            if (empty($fname) || empty($lname) || empty($email) || empty($password) || empty($passwordr)) {
-                echo "Please fill in all fields.";
+            if (empty($fname) || empty($lname) || empty($email) || empty($password) || empty($passwordr) || empty($birthDate)) {
+                echo json_encode(["success" => false, "error" => "Please fill in all fields."]);
+                return;
+            }
+
+            // Check if underage
+            $dob = new DateTime($birthDate);
+            $today = new DateTime();
+            $age = $today->diff($dob)->y;
+            if ($age < 18) {
+                echo json_encode(["success" => false, "error" => "You must be at least 18 years old to register."]);
                 return;
             }
 
             if ($password !== $passwordr) {
-                echo "Passwords do not match.";
+                echo json_encode(["success" => false, "error" => "Passwords do not match."]);
                 return;
             }
 
             $hash = password_hash($password, PASSWORD_DEFAULT);
-
             $userModel = new User($GLOBALS['conn']);
 
             try {
-                $userModel->createGuestUser(
-                    $email,
-                    $email,
-                    $hash,
-                    $fname,
-                    $lname,
-                    $phone
-                );
+                $userModel->createGuestUser($email, $email, $hash, $fname, $lname, $phone, $birthDate);
 
+                // Auto-login after signup
                 $_POST['email'] = $email;
                 $_POST['password'] = $password;
                 $this->login();
-
-                header('Location: /home');
-                exit;
-
             } catch (Exception $e) {
-                echo $e->getMessage();
+                error_log($e->getMessage());
+                echo json_encode(["success" => false, "error" => "Failed to create account."]);
             }
         }
     }
     public function logout()
     {
         session_destroy();
-        header('Location: /home');
-        exit;
+        echo json_encode(["success" => true, "redirect" => "/home"]);
+        return;
     }
 
 
     public function resetPasswordForm()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = $_POST['email'];
+            $email = trim($_POST['email']);
 
-            // Check if user exists
             $userModel = new User($GLOBALS['conn']);
             $user = $userModel->getUserByEmail($email);
 
             if ($user) {
                 $token = $userModel->createPasswordResetToken($user->UserID);
 
-                $userModel->sendPasswordResetEmail($user->Email, $token);
-
-                header('Location: /login');
-                exit;
+                if ($userModel->sendPasswordResetEmail($user->Email, $token)) {
+                    echo json_encode(["success" => true, "message" => "Recovery link sent!"]);
+                } else {
+                    echo json_encode(["success" => false, "error" => "Failed to send email."]);
+                }
             } else {
-                echo "Email not found in our system.";
+                echo json_encode(["success" => false, "error" => "Email not found in our system."]);
             }
         }
     }
     public function sendResetLinkk()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = $_POST['email'];
-
+            $email = trim($_POST['email']);
             $userModel = new User($GLOBALS['conn']);
             $user = $userModel->getUserByEmail($email);
 
             if ($user) {
                 $token = $userModel->createPasswordResetToken($user['UserID']);
                 if ($userModel->sendPasswordResetEmail($user['Email'], $token)) {
-                    echo "Recovery link sent!";
+                    echo json_encode(["success" => true, "message" => "Recovery link sent!"]);
                 } else {
-                    echo "Failed to send email.";
+                    echo json_encode(["success" => false, "error" => "Failed to send email."]);
                 }
             } else {
-                echo "Email not found in our system.";
+                echo json_encode(["success" => false, "error" => "Email not found in our system."]);
             }
         }
     }
@@ -155,7 +189,7 @@ class AuthController
         $token = $_GET['token'] ?? null;
 
         if (!$token) {
-            echo "Missing token.";
+            echo json_encode(["success" => false, "error" => "Missing token."]);
             return;
         }
 
@@ -163,14 +197,13 @@ class AuthController
         $user = $userModel->getUserByResetToken($token);
 
         if (!$user) {
-            echo "Invalid or expired token.";
+            echo json_encode(["success" => false, "error" => "Invalid or expired token."]);
             return;
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newPassword = trim($_POST['password']);
 
-            // password validation
             if (
                 strlen($newPassword) < 8
                 || !preg_match('/[A-Z]/', $newPassword)
@@ -178,17 +211,16 @@ class AuthController
                 || !preg_match('/[0-9]/', $newPassword)
                 || !preg_match('/[\W]/', $newPassword)
             ) {
-                echo "Password must be at least 8 chars, include upper/lowercase, number, and special char.";
+                echo json_encode(["success" => false, "error" => "Password must be at least 8 chars, include upper/lowercase, number, and special char."]);
                 return;
             }
 
             $hash = password_hash($newPassword, PASSWORD_DEFAULT);
             $userModel->updatePasswordByID($user->UserID, $hash);
-            $userModel->deleteResetToken($token); // invalidate token
+            $userModel->deleteResetToken($token);
 
-            echo "Password updated successfully!";
-            header('Location: /login');
-            exit;
+            echo json_encode(["success" => true, "message" => "Password updated successfully!", "redirect" => "/login"]);
+            return;
         }
     }
 }
