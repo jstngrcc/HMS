@@ -20,7 +20,7 @@ class CartController
         }
 
         $adults = (int) $_POST['adults'];
-        $roomID = (int) $_POST['room'];
+        $roomID = (int) $_POST['roomID'];
         $dateRange = $_POST['checkin'];
 
         // ---------- VALIDATION ----------
@@ -56,6 +56,7 @@ class CartController
         $checkin = $checkinObj->format('Y-m-d');
         $checkout = $checkoutObj->format('Y-m-d');
 
+
         $today = new DateTime();
         $today->setTime(0, 0, 0);
         $checkinObj->setTime(0, 0, 0);
@@ -66,7 +67,7 @@ class CartController
                 "success" => false,
                 "error" => "Check-out date must be after check-in date."
             ]);
-            return;
+            exit;
         }
 
         if ($checkinObj < $today) {
@@ -74,7 +75,7 @@ class CartController
                 "success" => false,
                 "error" => "Check-in date cannot be in the past."
             ]);
-            return;
+            exit;
         }
 
         if ($adults < 1) {
@@ -82,7 +83,7 @@ class CartController
                 "success" => false,
                 "error" => "Please input at least 1 guest."
             ]);
-            return;
+            exit;
         }
 
         if (empty($roomID)) {
@@ -97,18 +98,20 @@ class CartController
         try {
             $cart = new Cart($GLOBALS['conn']);
 
-            $cart->addToCart($roomID, $checkin, $checkout, $adults);
+            $cart->addRoomToCart($roomID, $checkin, $checkout, $adults);
 
             echo json_encode([
                 "success" => true,
                 "message" => "Room added to cart!"
             ]);
-
+            exit;
         } catch (Exception $e) {
             echo json_encode([
                 "success" => false,
                 "error" => "Failed to add to cart."
+                // "error" => $e->getMessage()
             ]);
+            exit;
         }
     }
 

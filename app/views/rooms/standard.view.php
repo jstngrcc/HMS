@@ -2,20 +2,18 @@
 $typeMap = [
     'standard single' => 'single',
     'standard double' => 'double',
-    'deluxe single'   => 'single',
-    'deluxe double'   => 'double',
-    'suite'           => 'double', // or whatever mapping you need
+    'deluxe single' => 'single',
+    'deluxe double' => 'double',
+    'suite' => 'double',
 ];
 
-$roomTypeRaw = strtolower($_GET['type'] ?? 'single'); // make lowercase
-$roomType = $typeMap[$roomTypeRaw] ?? 'single'; // map to single/double
+$roomTypeRaw = strtolower($_GET['type'] ?? 'single');
+$roomType = $typeMap[$roomTypeRaw] ?? 'single';
 $roomNumber = $_GET['room'] ?? null;
 
-// Optional: pre-fill form values based on room type
 $roomBasePrice = $roomType === 'single' ? 1800 : 2700;
 $maxGuests = $roomType === 'single' ? 2 : 3;
 
-// Pre-fill the radio buttons
 $singleChecked = $roomType === 'single' ? 'checked' : '';
 $doubleChecked = $roomType === 'double' ? 'checked' : '';
 ?>
@@ -99,6 +97,7 @@ $doubleChecked = $roomType === 'double' ? 'checked' : '';
 </div>
 
 <body data-room-type="standard">
+    <?php require_once __DIR__ . '/../components/toast.view.php'; ?>
     <?php require_once __DIR__ . '/../components/header.view.php'; ?>
 
     <div class="py-10 px-30 flex flex-col gap-5">
@@ -110,7 +109,9 @@ $doubleChecked = $roomType === 'double' ? 'checked' : '';
             <div
                 class="p-6 w-2/3 bg-white rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] flex flex-col gap-2 justify-between">
                 <div>
-                    <div class="justify-center text-black text-3xl font-normal font-crimson">Standard Room</div>
+                    <div class="justify-center text-black text-3xl font-normal font-crimson">Room
+                        <?= htmlspecialchars($_GET['room'] ?? '') ?> - Standard Room
+                    </div>
                     <div class="flex items-center justify-start">
                         <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
                         <img src="/assets/icons/star.svg" alt="star" class="w-4 h-4">
@@ -135,10 +136,12 @@ $doubleChecked = $roomType === 'double' ? 'checked' : '';
                     </div>
                 </div>
             </div>
-            <form action="/cart-submit" method="POST"
+            <form id="cart-form" action="/cart-submit" method="POST"
                 class="w-1/3 bg-white rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] p-6 flex flex-col gap-6">
+                <input type="hidden" name="roomID" id="roomID" value="<?= htmlspecialchars($_GET['room'] ?? '') ?>">
                 <div class="justify-center text-black text-xl font-normal font-crimson">Check In - Check Out</div>
-                <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out" value="<?= htmlspecialchars($_GET['checkin'] ?? '') ?>" required
+                <input type="text" name="checkin" id="daterange" placeholder="Check-In — Check-Out"
+                    value="<?= htmlspecialchars($_GET['checkin'] ?? '') ?>" required
                     class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
                 <div>
                     <div class="justify-center text-zinc-500 text-lg font-normal font-crimson">Time-In 12:00 PM –
@@ -161,7 +164,8 @@ $doubleChecked = $roomType === 'double' ? 'checked' : '';
                         per
                         night.</p>
                 </div>
-                <input type="number" id="guests" name="adults" placeholder="Guests" min="1" max="<?= $maxGuests ?>" value="1" required
+                <input type="number" id="guests" name="adults" placeholder="Guests" min="1" max="<?= $maxGuests ?>"
+                    value="1" required
                     class="bg-white rounded-sm p-2 text-crimson-600 font-crimson border border-gray-300">
                 <div class="justify-center text-black text-xl font-normal font-crimson">Room Type</div>
                 <div class="flex items-center gap-4">
@@ -184,10 +188,12 @@ $doubleChecked = $roomType === 'double' ? 'checked' : '';
                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
                 <div class="justify-center text-zinc-500 text-xl font-normal font-crimson">Room Rate (per night)
                 </div>
-                <div id="room-price" class="justify-center text-black text-xl font-normal font-crimson">₱<?= number_format($roomBasePrice) ?></div>
+                <div id="room-price" class="justify-center text-black text-xl font-normal font-crimson">
+                    ₱<?= number_format($roomBasePrice) ?></div>
                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-800 rounded-lg"></div>
                 <div class="justify-center text-zinc-500 text-xl font-normal font-crimson">Subtotal</div>
-                <div id="subtotal-price" class="justify-center text-black text-xl font-normal font-crimson">₱<?= number_format($roomBasePrice) ?>
+                <div id="subtotal-price" class="justify-center text-black text-xl font-normal font-crimson">
+                    ₱<?= number_format($roomBasePrice) ?>
                 </div>
                 <button type="submit" class="text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#c39c4d] p-3 
            hover:bg-[#b28a44] transition-colors duration-300">
@@ -321,6 +327,56 @@ $doubleChecked = $roomType === 'double' ? 'checked' : '';
     <script src="/js/calculateTotalAmount.js"></script>
     <script src="/js/bookingModal.js"></script>
     <script src="/js/maxGuests.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#cart-form').submit(function (e) {
+                e.preventDefault(); // prevent normal form submit
+
+                // Gather form data
+                var formData = $(this).serialize();
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    method: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            // Update modal content dynamically if needed
+                            $('#modal-room-type').text('Standard Room');
+                            $('#modal-room').text($('input[name="room"]:checked').val());
+                            $('#modal-guests').text($('#guests').val() + ' Guest' + ($('#guests').val() > 1 ? 's' : ''));
+                            $('#modal-checkin-checkout').text($('#daterange').val());
+
+                            var roomPrice = parseFloat($('input[name="room"]:checked').data('base-price'));
+                            var guests = parseInt($('#guests').val());
+                            var additionalCharge = guests > 1 ? (roomPrice * 0.1 * (guests - 1)) : 0;
+                            var total = roomPrice + additionalCharge;
+                            total = total * 1.12; // add 12% tax
+
+                            $('#modal-room-cost').text('₱' + roomPrice.toFixed(2));
+                            $('#modal-guest-charge').text('₱' + additionalCharge.toFixed(2));
+                            $('#modal-total').text('₱' + total.toFixed(2));
+
+                            // Show modal
+                            $('#booking-modal').removeClass('hidden').addClass('flex');
+                        } else {
+                            showToast(response.error);
+                        }
+                    },
+                    error: function (xhr) {
+                        console.log(xhr.responseText); // 🔥 VERY IMPORTANT
+                        showToast('Something went wrong. Please try again.');
+                    }
+                });
+            });
+
+            // Close modal
+            $('#close-modal, #continue-browsing').click(function () {
+                $('#booking-modal').removeClass('flex').addClass('hidden');
+            });
+        });
+    </script>
 </body>
 
 </html>
