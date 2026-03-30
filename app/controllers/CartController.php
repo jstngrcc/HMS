@@ -134,5 +134,38 @@ class CartController
     {
         return isset($_SESSION['logged_in_user_id']);
     }
+
+    public function remove()
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request']);
+            return;
+        }
+
+        $cartRoomID = (int) ($_POST['cartRoomID'] ?? 0);
+
+        if (!$cartRoomID) {
+            echo json_encode(['success' => false, 'error' => 'CartRoomID missing']);
+            return;
+        }
+
+        try {
+            $cartModel = new Cart($GLOBALS['conn']);
+            $cartModel->removeCartItem($cartRoomID);
+
+            $newCartCount = $cartModel->getCartAmount();
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Item removed from cart',
+                'cartCount' => $newCartCount
+            ]);
+            exit;
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
 }
 ?>

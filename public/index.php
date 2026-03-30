@@ -134,6 +134,10 @@ switch ($uri) {
         $cart->getSessionCarts();
         break;
 
+    case '/cart-remove':
+        $cart->remove();
+        break;
+
     case '/cart-submit':
         $cart->submit();
         break;

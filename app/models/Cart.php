@@ -68,7 +68,7 @@ class Cart
         }
 
         $result = $this->conn->execute_query(
-            "SELECT r.RoomID, r.RoomNumber, rt.RoomTypeName, rt.BasePrice, cr.NumAdults, cr.CheckInDate, cr.CheckOutDate
+            "SELECT cr.CartRoomID, r.RoomID, r.RoomNumber, rt.RoomTypeName, rt.BasePrice, cr.NumAdults, cr.CheckInDate, cr.CheckOutDate
             FROM CartRooms cr
             INNER JOIN Rooms r ON cr.RoomID = r.RoomID
             INNER JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
@@ -78,6 +78,24 @@ class Cart
 
         return $result->fetch_all(MYSQLI_ASSOC);
 
+    }
+
+    public function removeCartItem(int $cartRoomID)
+    {
+        $CartID = $_SESSION['cart_id'] ?? null;
+        if (!$CartID) {
+            throw new Exception("No cart found for session.");
+        }
+
+        try {
+            $this->conn->execute_query(
+                "DELETE FROM CartRooms WHERE CartRoomID = ? AND CartID = ?",
+                [$cartRoomID, $CartID]
+            );
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("Failed to remove cart item: " . $e->getMessage());
+        }
     }
 }
 
