@@ -12,7 +12,7 @@ $logged_in = $logged_in ?? false;
         hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.9)] hover:scale-105">
 
             <?php if (!empty($cartCount) && $cartCount > 0): ?>
-                <span class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/3 
+                <span id="cart-count" class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/3 
                      bg-[#FCEDB5] text-black font-crimson text-xs font-bold 
                      w-4 h-4 flex items-center justify-center 
                      border border-[#FCEDB5]">

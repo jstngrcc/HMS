@@ -100,9 +100,13 @@ class CartController
 
             $cart->addRoomToCart($roomID, $checkin, $checkout, $adults);
 
+            $cart = new Cart($GLOBALS['conn']);
+            $cartCount = $cart->getCartAmount();
+
             echo json_encode([
                 "success" => true,
-                "message" => "Room added to cart!"
+                "message" => "Room added to cart!",
+                "cartCount" => $cartCount // <-- add this
             ]);
             exit;
         } catch (Exception $e) {

@@ -327,56 +327,6 @@ $doubleChecked = $roomType === 'double' ? 'checked' : '';
     <script src="/js/calculateTotalAmount.js"></script>
     <script src="/js/bookingModal.js"></script>
     <script src="/js/maxGuests.js"></script>
-    <script>
-        $(document).ready(function () {
-            $('#cart-form').submit(function (e) {
-                e.preventDefault(); // prevent normal form submit
-
-                // Gather form data
-                var formData = $(this).serialize();
-
-                $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'POST',
-                    data: formData,
-                    dataType: 'json',
-                    success: function (response) {
-                        if (response.success) {
-                            // Update modal content dynamically if needed
-                            $('#modal-room-type').text('Standard Room');
-                            $('#modal-room').text($('input[name="room"]:checked').val());
-                            $('#modal-guests').text($('#guests').val() + ' Guest' + ($('#guests').val() > 1 ? 's' : ''));
-                            $('#modal-checkin-checkout').text($('#daterange').val());
-
-                            var roomPrice = parseFloat($('input[name="room"]:checked').data('base-price'));
-                            var guests = parseInt($('#guests').val());
-                            var additionalCharge = guests > 1 ? (roomPrice * 0.1 * (guests - 1)) : 0;
-                            var total = roomPrice + additionalCharge;
-                            total = total * 1.12; // add 12% tax
-
-                            $('#modal-room-cost').text('₱' + roomPrice.toFixed(2));
-                            $('#modal-guest-charge').text('₱' + additionalCharge.toFixed(2));
-                            $('#modal-total').text('₱' + total.toFixed(2));
-
-                            // Show modal
-                            $('#booking-modal').removeClass('hidden').addClass('flex');
-                        } else {
-                            showToast(response.error);
-                        }
-                    },
-                    error: function (xhr) {
-                        console.log(xhr.responseText); // 🔥 VERY IMPORTANT
-                        showToast('Something went wrong. Please try again.');
-                    }
-                });
-            });
-
-            // Close modal
-            $('#close-modal, #continue-browsing').click(function () {
-                $('#booking-modal').removeClass('flex').addClass('hidden');
-            });
-        });
-    </script>
 </body>
 
 </html>

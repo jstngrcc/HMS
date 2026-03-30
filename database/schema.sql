@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS Roles (
 -- =========================
 -- USERS
 -- =========================
+
+-- TODO: Delete if Expired
 CREATE TABLE IF NOT EXISTS SessionGuests (
     SessionGuestID INT AUTO_INCREMENT PRIMARY KEY,
     SessionToken VARCHAR(255) NOT NULL UNIQUE,
@@ -57,6 +59,7 @@ CREATE TABLE IF NOT EXISTS Users (
     ON UPDATE CASCADE
 );
 
+-- TODO: Delete if expired
 CREATE TABLE IF NOT EXISTS PasswordResets (
     ResetID INT AUTO_INCREMENT PRIMARY KEY,
     UserID INT NOT NULL,
@@ -178,6 +181,7 @@ CREATE TABLE IF NOT EXISTS Payments (
 -- CARTS
 -- =========================
 
+-- TODO: Delete if Expired
 CREATE TABLE IF NOT EXISTS ReservationCarts (
     CartID INT AUTO_INCREMENT PRIMARY KEY,
     SessionGuestID INT NOT NULL UNIQUE,
