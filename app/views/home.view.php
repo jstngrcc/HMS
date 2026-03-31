@@ -170,54 +170,54 @@
       <!-- Gallery -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g1.jpg" alt="Spiral staircase" class="w-full h-full object-cover">
+          <img src="/assets/images/g1.jpg" alt="Spiral staircase" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g2.jpg" alt="Reception area" class="w-full h-full object-cover">
+          <img src="/assets/images/g2.jpg" alt="Reception area" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g3.jpg" alt="Guest room" class="w-full h-full object-cover">
+          <img src="/assets/images/g3.jpg" alt="Guest room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g4.jpg" alt="Hallway" class="w-full h-full object-cover">
+          <img src="/assets/images/g4.jpg" alt="Hallway" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g5.jpg" alt="Poolside area" class="w-full h-full object-cover">
+          <img src="/assets/images/g5.jpg" alt="Poolside area" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g6.jpg" alt="Seating area" class="w-full h-full object-cover">
+          <img src="/assets/images/g6.jpg" alt="Seating area" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g7.jpg" alt="Bathroom" class="w-full h-full object-cover">
+          <img src="/assets/images/g7.jpg" alt="Bathroom" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g9.jpg" alt="Suite room" class="w-full h-full object-cover">
-        </div>
-
-        <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g9.jpg" alt="Suite room" class="w-full h-full object-cover">
+          <img src="/assets/images/g9.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
 
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g10.jpg" alt="Suite room" class="w-full h-full object-cover">
+          <img src="/assets/images/g9.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
+        </div>
+
+        <div class="overflow-hidden rounded-sm h-64">
+          <img src="/assets/images/g10.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g11.jpg" alt="Suite room" class="w-full h-full object-cover">
+          <img src="/assets/images/g11.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g12.jpg" alt="Suite room" class="w-full h-full object-cover">
+          <img src="/assets/images/g12.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g13.jpg" alt="Suite room" class="w-full h-full object-cover">
+          <img src="/assets/images/g13.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g14.jpg" alt="Suite room" class="w-full h-full object-cover">
+          <img src="/assets/images/g14.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g15.jpg" alt="Suite room" class="w-full h-full object-cover">
+          <img src="/assets/images/g15.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
         <div class="overflow-hidden rounded-sm h-64">
-          <img src="/assets/images/g16.jpg" alt="Suite room" class="w-full h-full object-cover">
+          <img src="/assets/images/g16.jpg" alt="Suite room" class="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110">
         </div>
       </div>
     </div>
