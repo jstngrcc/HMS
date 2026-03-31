@@ -106,6 +106,22 @@ class Cart
             throw new Exception("Failed to remove cart item: " . $e->getMessage());
         }
     }
+
+    public function removeCartItems(int $cartRoomID) {
+        $CartID = $_SESSION['cart_id'] ?? null;
+        if (!$CartID) {
+            throw new Exception("No cart found for session.");
+        }
+
+        try {
+            $this->conn->execute_query(
+                "DELETE FROM CartRooms"
+            );
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("Failed to clear cart: " . $e->getMessage());
+        }
+    }
 }
 
 ?>

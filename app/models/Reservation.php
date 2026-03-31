@@ -36,19 +36,22 @@ class Reservation
         }
     }
 
-    public function addRoomToReservation($reservationID, $roomID)
+    public function addRoomToReservation($reservationID, $roomID, $checkIn, $checkOut, $numAdults)
     {
         try {
             $result = $this->conn->execute_query(
-                "CALL AddRoomToReservation(?, ?)",
-                [$reservationID, $roomID]
+                "CALL AddRoomToReservation(?, ?, ?, ?, ?)",
+                [$reservationID, $roomID, $checkIn, $checkOut, $numAdults]
             );
 
             if (!$result) {
                 throw new Exception("Failed to add room to reservation: " . $this->conn->error);
             }
+
+            return true;
+
         } catch (Exception $e) {
-            throw new Exception("Failed to cancel reservation: " . $e->getMessage());
+            throw new Exception("Failed to add room to reservation: " . $e->getMessage());
         }
     }
 

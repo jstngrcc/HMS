@@ -77,6 +77,12 @@ class PagesController
         require_once '../app/views/auth/forgot_password.view.php';
     }
 
+    public function bookings()
+    {
+        $logged_in = $this->getAuthState();
+        require_once '../app/views/reservations/bookings.view.php';
+    }
+
     public function notFound()
     {
         $logged_in = $this->getAuthState();

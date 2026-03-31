@@ -146,6 +146,10 @@ switch ($uri) {
         $reservation->submit();
         break;
 
+    case '/bookings':
+        $pages->bookings();
+        break;
+
     case '/test':
         require_once '../app/views/static/test.view.php';
         break;

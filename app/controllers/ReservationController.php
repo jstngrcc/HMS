@@ -1,6 +1,7 @@
 <?php
 
 require_once '../app/models/User.php';
+require_once '../app/models/Cart.php';
 require_once '../app/models/Reservation.php';
 require_once '../app/models/ReservationCart.php';
 
@@ -56,7 +57,7 @@ class ReservationController
         }
 
         $userModel = new User($GLOBALS['conn']);
-        $reservationCartModel = new ReservationCart($GLOBALS['conn']);
+        $cartModel = new Cart($GLOBALS['conn']);
         $reservationModel = new Reservation($GLOBALS['conn']);
 
         try {
@@ -84,7 +85,38 @@ class ReservationController
                     'error' => "Reservation could not be made."
                 ]);
             } else {
-                // TODO: Add rooms to reservation rooms
+                $carts = $cartModel->getCartRows();
+
+                foreach ($carts as $cart) {
+                    $roomID = $cart['RoomID'];
+                    $checkIn = $cart['CheckInDate'];
+                    $checkOut = $cart['CheckOutDate'];
+                    $numAdults = $cart['NumAdults'];
+
+                    $result = $reservationModel->addRoomToReservation(
+                        $reservationID,
+                        $roomID,
+                        $checkIn,
+                        $checkOut,
+                        $numAdults
+                    );
+
+                    if (!$result) {
+                        echo json_encode([
+                            "success" => false,
+                            "error" => "Failed to add room to reservation."
+                        ]);
+                        return;
+                    }
+                }
+
+                $cartsClear = $cartModel->removeCartItems($cartID);
+
+                if (!$cartsClear) {
+                    echo json_encode(["success" => false, "error" => "Failed to clear cart."]);
+                    return;
+                }
+
                 echo json_encode([
                     "success" => true,
                     "message" => "Reservation completed successfully."
