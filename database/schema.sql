@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS SessionGuests (
 
 CREATE TABLE IF NOT EXISTS Guests (
     GuestID INT AUTO_INCREMENT PRIMARY KEY,
-    Email VARCHAR(150) NOT NULL UNIQUE,
+    Email VARCHAR(150) NOT NULL,
     FirstName VARCHAR(100) NOT NULL,
     LastName VARCHAR(100) NOT NULL,
     PhoneContact VARCHAR(30),
@@ -129,10 +129,8 @@ CREATE TABLE IF NOT EXISTS ReservationStatus (
 CREATE TABLE IF NOT EXISTS Reservations (
     ReservationID INT AUTO_INCREMENT PRIMARY KEY,
     GuestID INT NOT NULL,
+    GuestUUID CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
     StatusID INT NOT NULL,
-    CheckInDate DATE NOT NULL,
-    CheckOutDate DATE NOT NULL,
-    NumAdults INT DEFAULT 1,
     BookingToken CHAR(36) NOT NULL UNIQUE, -- UUID token for guest access
     CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -147,6 +145,9 @@ CREATE TABLE IF NOT EXISTS Reservations (
 CREATE TABLE IF NOT EXISTS ReservationRooms (
     ReservationRoomID INT AUTO_INCREMENT PRIMARY KEY,
     ReservationID INT NOT NULL,
+    CheckInDate DATE NOT NULL,
+    CheckOutDate DATE NOT NULL,
+    NumAdults INT DEFAULT 1,
     RoomID INT NOT NULL,
 
     FOREIGN KEY (ReservationID) REFERENCES Reservations(ReservationID),
@@ -198,8 +199,6 @@ CREATE TABLE IF NOT EXISTS CartRooms (
     CheckOutDate DATE NOT NULL,
     NumAdults INT NOT NULL,
 
-    UNIQUE (CartID, RoomID),
-
     FOREIGN KEY (CartID) REFERENCES ReservationCarts(CartID),
     FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID)
 );
@@ -208,7 +207,7 @@ CREATE TABLE IF NOT EXISTS CartRooms (
 -- INDEXES
 -- =========================
 CREATE INDEX idx_reservation_dates
-ON Reservations(CheckInDate, CheckOutDate);
+ON ReservationRooms(CheckInDate, CheckOutDate);
 
 CREATE INDEX idx_room_type
 ON Rooms(RoomTypeID);

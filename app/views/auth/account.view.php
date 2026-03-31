@@ -45,7 +45,7 @@
                         <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" name="phone" placeholder="000-000-0000"
                             class="border border-gray-300 p-2 rounded w-full text-black bg-white">
                         <br>
-                        <label for="birthDate">Birthday* </label>
+                        <label for="birthDate">Birthdate* </label>
                         <input type="text" id="birthDate" name="birthDate" placeholder="Select your birthdate"
                             class="border border-gray-300 p-2 rounded w-full text-black bg-white">
                         <br>

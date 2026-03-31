@@ -308,6 +308,31 @@ class AuthController
             exit;
         }
     }
+
+    public function getProfile()
+    {
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            echo json_encode(["success" => false, "error" => "Unauthorized"]);
+            exit;
+        }
+
+        $userID = $_SESSION['logged_in_user_id'];
+        $userModel = new User($GLOBALS['conn']);
+        $guestData = $userModel->getGuestDetails($userID);
+
+        if (!$guestData) {
+            echo json_encode(["success" => false, "error" => "User not found"]);
+            exit;
+        }
+
+        echo json_encode([
+            "success" => true,
+            "data" => $guestData
+        ]);
+        exit;
+    }
 }
 
 ?>

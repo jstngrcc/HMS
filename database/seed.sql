@@ -19,9 +19,9 @@ INSERT INTO ReservationStatus (StatusName) VALUES
 
 INSERT INTO PaymentMethods (MethodName) VALUES
 ('cash'),
-('credit_card'),
-('debit_card'),
-('online_payment');
+('card'),
+('online_payment'),
+('bank');
 
 -- =========================
 -- Admin User

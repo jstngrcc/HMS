@@ -10,12 +10,12 @@ class Reservation
         $this->conn = $db;
     }
 
-    public function createReservation($guestID, $checkin, $checkout, $adults, $roomID, $paymentMethod, $totalAmount)
+    public function createReservation($guestID, $paymentMethod, $totalAmount)
     {
         try {
             $this->conn->execute_query(
-                "CALL CreateReservation(?, ?, ?, ?, ?, ?, ?, @ReservationID, @BookingToken)",
-                [$guestID, $checkin, $checkout, $adults, $roomID, $paymentMethod, $totalAmount]
+                "CALL CreateReservation(?, ?, ?, @ReservationID, @BookingToken)",
+                [$guestID, $paymentMethod, $totalAmount]
             );
 
             $result = $this->conn->query("SELECT @ReservationID AS ReservationID, @BookingToken AS BookingToken;");
@@ -33,6 +33,22 @@ class Reservation
             }
         } catch (Exception $e) {
             throw new Exception("Failed to create reservation: " . $e->getMessage());
+        }
+    }
+
+    public function addRoomToReservation($reservationID, $roomID)
+    {
+        try {
+            $result = $this->conn->execute_query(
+                "CALL AddRoomToReservation(?, ?)",
+                [$reservationID, $roomID]
+            );
+
+            if (!$result) {
+                throw new Exception("Failed to add room to reservation: " . $this->conn->error);
+            }
+        } catch (Exception $e) {
+            throw new Exception("Failed to cancel reservation: " . $e->getMessage());
         }
     }
 
@@ -55,22 +71,6 @@ class Reservation
 
             if (!$result) {
                 throw new Exception("Failed to cancel reservation: " . $this->conn->error);
-            }
-        } catch (Exception $e) {
-            throw new Exception("Failed to cancel reservation: " . $e->getMessage());
-        }
-    }
-
-    public function addRoomToReservation($reservationID, $roomID)
-    {
-        try {
-            $result = $this->conn->execute_query(
-                "CALL AddRoomToReservation(?, ?)",
-                [$reservationID, $roomID]
-            );
-
-            if (!$result) {
-                throw new Exception("Failed to add room to reservation: " . $this->conn->error);
             }
         } catch (Exception $e) {
             throw new Exception("Failed to cancel reservation: " . $e->getMessage());

@@ -94,6 +94,10 @@ switch ($uri) {
         $auth->updateProfile();
         break;
 
+    case '/get-profile':
+        $auth->getProfile();
+        break;
+
     case '/logout':
         $auth->logout();
         break;
@@ -108,10 +112,6 @@ switch ($uri) {
 
     case '/reservation':
         $pages->reservation();
-        break;
-
-    case '/reservation-submit':
-        $reservation->submit();
         break;
 
     case '/search':
@@ -140,6 +140,10 @@ switch ($uri) {
 
     case '/cart-submit':
         $cart->submit();
+        break;
+
+    case '/reservation-submit':
+        $reservation->submit();
         break;
 
     case '/test':

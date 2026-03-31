@@ -137,4 +137,54 @@ class ReservationCart
             return null;
         }
     }
+
+    public function checkoutCart($cartID, $paymentMethod, $adults, $email, $firstname, $lastname, $phone, $birthdate)
+    {
+        if (!$this->cartExists($cartID)) {
+            throw new Exception("Cart not found or expired.");
+        }
+
+        $cartItemsResult = $this->conn->execute_query(
+            "SELECT * FROM CartRooms WHERE CartID = ?",
+            [$cartID]
+        );
+
+        if ($cartItemsResult->num_rows === 0) {
+            throw new Exception("No rooms in cart.");
+        }
+
+        $rooms = [];
+        while ($row = $cartItemsResult->fetch_assoc()) {
+            $rooms[] = $row;
+        }
+
+        $stmt = $this->conn->prepare("CALL CheckoutCart(?, ?, ?, ?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            throw new Exception("Failed to prepare statement: " . $this->conn->error);
+        }
+
+        $stmt->bind_param(
+            "isssssss",
+            $cartID,
+            $firstname,
+            $lastname,
+            $email,
+            $phone,
+            $birthdate,
+            $paymentMethod,
+            json_encode($rooms) // or another way your procedure accepts room data
+        );
+
+        if (!$stmt->execute()) {
+            throw new Exception("Reservation creation failed: " . $stmt->error);
+        }
+
+        // Optionally, mark cart as checked out
+        $this->conn->execute_query(
+            "UPDATE ReservationCarts SET ExpiresAt = NOW() WHERE CartID = ?",
+            [$cartID]
+        );
+
+        $stmt->close();
+    }
 }

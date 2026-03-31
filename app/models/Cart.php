@@ -12,6 +12,7 @@ class Cart
     {
         $CartID = $_SESSION['cart_id'];
 
+        // Get RoomID from RoomNumber
         $stmt = $this->conn->execute_query(
             "SELECT RoomID FROM Rooms WHERE RoomNumber = ?",
             [$roomNumber]
@@ -25,20 +26,28 @@ class Cart
 
         $roomID = $row['RoomID'];
 
+        // Check for overlapping dates in the cart
+        $stmt = $this->conn->execute_query(
+            "SELECT 1 
+         FROM CartRooms 
+         WHERE CartID = ? AND RoomID = ? 
+           AND NOT (CheckOutDate <= ? OR CheckInDate >= ?)",
+            [$CartID, $roomID, $checkin, $checkout]
+        );
+
+        if ($stmt->num_rows > 0) {
+            throw new Exception("This room is already in your cart for overlapping dates.");
+        }
+
+        // Call stored procedure
         try {
-            $result = $this->conn->execute_query(
+            $this->conn->execute_query(
                 "CALL AddRoomToCart(?, ?, ?, ?, ?)",
                 [$CartID, $roomID, $checkin, $checkout, $adults]
             );
             return true;
         } catch (mysqli_sql_exception $e) {
-            // Duplicate key error
-            if ($e->getCode() === 1062) {
-                throw new Exception("This room is already in your cart.");
-            }
-
-            // Other errors
-            throw new Exception("Failed to add to cart.");
+            throw new Exception("Failed to add to cart: " . $e->getMessage());
         }
     }
 

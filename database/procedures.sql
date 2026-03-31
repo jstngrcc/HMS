@@ -137,13 +137,11 @@ BEGIN
     AND r.RoomID NOT IN (
 
         SELECT rr.RoomID
-        FROM Reservations res
-        JOIN ReservationRooms rr 
-        ON res.ReservationID = rr.ReservationID
-
+        FROM ReservationRooms rr
+        JOIN Reservations res ON rr.ReservationID = res.ReservationID
         WHERE res.StatusID NOT IN (4,5)
-        AND res.CheckInDate < pCheckOut
-        AND res.CheckOutDate > pCheckIn
+        AND rr.CheckInDate < pCheckOut
+        AND rr.CheckOutDate > pCheckIn
 
     );
 
@@ -167,7 +165,7 @@ BEGIN
     JOIN Reservations r ON rr.ReservationID = r.ReservationID
     WHERE rr.RoomID = pRoomID
       AND r.StatusID IN (1,2,3)
-      AND NOT (r.CheckOutDate <= pCheckIn OR r.CheckInDate >= pCheckOut);
+      AND NOT (rr.CheckOutDate <= pCheckIn OR rr.CheckInDate >= pCheckOut);
 
     IF overlapCount = 0 THEN
         SET isAvailable = TRUE;
@@ -224,8 +222,8 @@ BEGIN
             FROM ReservationRooms rr
             JOIN Reservations res ON rr.ReservationID = res.ReservationID
             WHERE NOT (
-                res.CheckOutDate <= pCheckIn OR
-                res.CheckInDate >= pCheckOut
+                rr.CheckOutDate <= pCheckIn OR
+                rr.CheckInDate >= pCheckOut
             )
         )
     )
@@ -371,118 +369,6 @@ DELIMITER $$
 
 -- DELIMITER ;
 
-DELIMITER $$
-
-CREATE PROCEDURE CheckoutCart(
-    IN pCartID INT,
-    IN pPaymentMethodID INT,
-    IN pNumAdults INT,
-    IN pEmail VARCHAR(150),
-    IN pFirstName VARCHAR(100),
-    IN pLastName VARCHAR(100),
-    IN pPhone VARCHAR(30),
-    IN pBirthDate DATE
-)
-BEGIN
-    DECLARE done INT DEFAULT 0;
-    DECLARE vroomID INT;
-    DECLARE checkIn DATE;
-    DECLARE checkOut DATE;
-    DECLARE vguestID INT;
-    DECLARE reservationID INT;
-    DECLARE isAvailable BOOLEAN;
-    DECLARE errMsg VARCHAR(255);
-    DECLARE token CHAR(36);
-
-    DECLARE cartCursor CURSOR FOR
-        SELECT RoomID, CheckInDate, CheckOutDate
-        FROM CartRooms
-        WHERE CartID = pCartID;
-
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
-    START TRANSACTION;
-
-    -- ✅ STEP 1: Create or reuse Guest
-    SELECT GuestID INTO vguestID
-    FROM Guests
-    WHERE Email = pEmail
-    LIMIT 1;
-
-    IF vguestID IS NULL THEN
-        INSERT INTO Guests (Email, FirstName, LastName, PhoneContact, BirthDate)
-        VALUES (pEmail, pFirstName, pLastName, pPhone, pBirthDate);
-
-        SET vguestID = LAST_INSERT_ID();
-    END IF;
-
-    -- ✅ STEP 2: Validate cart exists
-    IF NOT EXISTS (SELECT 1 FROM ReservationCarts WHERE CartID = pCartID) THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid CartID';
-    END IF;
-
-    -- ✅ STEP 3: Validate availability again
-    OPEN cartCursor;
-
-    read_loop: LOOP
-        FETCH cartCursor INTO vroomID, checkIn, checkOut;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-
-        CALL CheckRoomAvailability(vroomID, checkIn, checkOut, isAvailable);
-
-        IF isAvailable = 0 THEN
-            SET errMsg = CONCAT('Room ', vroomID, ' no longer available');
-            ROLLBACK;
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = errMsg;
-        END IF;
-    END LOOP;
-
-    CLOSE cartCursor;
-
-    -- ✅ STEP 4: Create reservation
-    SET token = UUID();
-
-    INSERT INTO Reservations 
-        (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, BookingToken)
-    SELECT 
-        vguestID, 1, MIN(CheckInDate), MAX(CheckOutDate), pNumAdults, token
-    FROM CartRooms
-    WHERE CartID = pCartID;
-
-    SET reservationID = LAST_INSERT_ID();
-
-    -- ✅ STEP 5: Attach rooms
-    INSERT INTO ReservationRooms (ReservationID, RoomID)
-    SELECT reservationID, RoomID
-    FROM CartRooms
-    WHERE CartID = pCartID;
-
-    -- ✅ STEP 6: Payment
-    INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
-    SELECT 
-        reservationID, 
-        pPaymentMethodID, 
-        SUM(rt.BasePrice), 
-        'pending'
-    FROM CartRooms cr
-    JOIN Rooms r ON cr.RoomID = r.RoomID
-    JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
-    WHERE cr.CartID = pCartID;
-
-    -- ✅ STEP 7: Cleanup
-    DELETE FROM CartRooms WHERE CartID = pCartID;
-    DELETE FROM ReservationCarts WHERE CartID = pCartID;
-
-    COMMIT;
-
-    SELECT reservationID AS ReservationID;
-END$$
-
-DELIMITER ;
-
 -- =========================
 -- RESERVATION
 -- =========================
@@ -491,10 +377,6 @@ DELIMITER $$
 
 CREATE PROCEDURE CreateReservation(
     IN pGuestID INT,
-    IN pCheckIn DATE,
-    IN pCheckOut DATE,
-    IN pNumAdults INT,
-    IN pRoomID INT,
     IN pPaymentMethodID INT,
     IN pAmount DECIMAL(10,2),
     OUT pReservationID INT,
@@ -504,47 +386,24 @@ BEGIN
     DECLARE isAvailable BOOLEAN;
     DECLARE token CHAR(36);
 
-    IF pCheckIn < CURDATE() OR pCheckOut < pCheckIn THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Check-in date must be before or on check-out date';
-    END IF;
-
     START TRANSACTION;
+    -- Generate unique booking token
+    SET token = UUID();
 
-    -- Lock room
-    SELECT RoomID
-    FROM Rooms
-    WHERE RoomID = pRoomID
-    FOR UPDATE;
+    -- Insert reservation
+    INSERT INTO Reservations (GuestID, StatusID, BookingToken)
+    VALUES (pGuestID, 1, token);
 
-    CALL CheckRoomAvailability(pRoomID, pCheckIn, pCheckOut, isAvailable);
+    SET pReservationID = LAST_INSERT_ID();
+    SET pBookingToken = token;
 
-    IF isAvailable = 0 THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Room already booked for these dates';
-    ELSE
-        -- Generate token
-        SET token = UUID();
+    -- Insert payment
+    INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
+    VALUES (pReservationID, pPaymentMethodID, pAmount, 'pending');
 
-        INSERT INTO Reservations
-        (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, BookingToken)
-        VALUES
-        (pGuestID, 1, pCheckIn, pCheckOut, pNumAdults, token);
+    COMMIT;
 
-        SET pReservationID = LAST_INSERT_ID();
-        SET pBookingToken = token;
-
-        INSERT INTO ReservationRooms (ReservationID, RoomID)
-        VALUES (pReservationID, pRoomID);
-
-        INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
-        VALUES (pReservationID, pPaymentMethodID, pAmount, 'pending');
-
-        COMMIT;
-
-        SELECT pReservationID AS ReservationID, pBookingToken AS BookingToken;
-    END IF;
+    SELECT pReservationID AS ReservationID, pBookingToken AS BookingToken;
 END$$
 
 DELIMITER ;
@@ -553,25 +412,36 @@ DELIMITER $$
 
 CREATE PROCEDURE AddRoomToReservation(
     IN pReservationID INT,
-    IN pRoomID INT
+    IN pRoomID INT,
+    IN pCheckIn DATE,
+    IN pCheckOut DATE,
+    IN pNumAdults INT
 )
 BEGIN
     DECLARE isAvailable BOOLEAN;
-    DECLARE checkIn DATE;
-    DECLARE checkOut DATE;
 
-    SELECT CheckInDate, CheckOutDate
-    INTO checkIn, checkOut
-    FROM Reservations
-    WHERE ReservationID = pReservationID
+    START TRANSACTION;
+
+    -- Lock room row to prevent concurrent booking
+    SELECT RoomID
+    FROM Rooms
+    WHERE RoomID = pRoomID
     FOR UPDATE;
 
-    IF checkIn IS NULL OR checkOut IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Reservation not found';
-    END IF;
+    -- Check availability
+    CALL CheckRoomAvailability(pRoomID, pCheckIn, pCheckOut, isAvailable);
 
-    INSERT INTO ReservationRooms (ReservationID, RoomID)
-    VALUES (pReservationID, pRoomID);
+    IF isAvailable = 0 THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Room already booked for these dates';
+    ELSE
+        INSERT INTO ReservationRooms
+        (ReservationID, CheckInDate, CheckOutDate, NumAdults, RoomID)
+        VALUES (pReservationID, pCheckIn, pCheckOut, pNumAdults, pRoomID);
+
+        COMMIT;
+    END IF;
 END$$
 
 DELIMITER ;

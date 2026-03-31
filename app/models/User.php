@@ -42,14 +42,32 @@ class User
         }
     }
 
+    public function getGuestIDbyUserID($userID) {
+        $result = $this->conn->execute_query(
+            "SELECT GuestID FROM Users WHERE UserID = ?",
+            [$userID]
+        );
+        if ($result) {
+            return $result->fetch_object();
+        } else {    
+            return false;
+        }
+    }
+
+    public function getGuestDetails($userID) {
+
+        $result = $this->conn->execute_query(
+            "SELECT g.FirstName, g.LastName, g.PhoneContact, g.BirthDate, g.Email
+            FROM Guests g
+            JOIN Users u ON g.GuestID = u.GuestID
+            WHERE u.UserID = ?",
+            [$userID]
+        );
+        return $result ? $result->fetch_assoc() : null;
+    }
+
     public function createGuest($email, $firstName, $lastName, $phone, $birthDate)
     {
-        // Check if guest already exists
-        $existingGuest = $this->getGuestByEmail($email);
-        if ($existingGuest) {
-            return $existingGuest->GuestID;
-        }
-
         // Create new guest
         $this->conn->execute_query(
             "CALL CreateGuest(?, ?, ?, ?, ?, @newGuestID)",
@@ -63,10 +81,9 @@ class User
 
     public function createGuestUser($email, $emailGuest, $password, $firstName, $lastName, $phone, $birthDate)
     {
-        $existingGuest = $this->getGuestByEmail($email);
-
-        if ($existingGuest) {
-            throw new Exception("Email already exists. Please log in instead.");
+        $user = $this->getUserByEmail($email);
+        if (!$user) {
+            throw new Exception("Account with that email already exists.");
         }
 
         $result = $this->conn->execute_query(
