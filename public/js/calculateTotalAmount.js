@@ -47,13 +47,23 @@ function updatePriceUI({ nights, guests, roomType }) {
         `₱${pricing.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 }
 
-// Event handlers
 function handleUpdate() {
     const guestInput = document.getElementById("guests");
     guests = Number(guestInput.value) || 1;
 
     const selectedRoom = document.querySelector('input[name="room"]:checked');
     roomType = selectedRoom ? selectedRoom.value : 'single';
+
+    // --- NEW: calculate nights from datepicker ---
+    const daterangeInput = document.getElementById("daterange");
+    const dates = daterangeInput.value.split(' to ');
+    const checkin = dates[0] || '';
+    const checkout = dates[1] || '';
+    if (checkin && checkout) {
+        nights = getNights(checkin.replace(/\//g, '-'), checkout.replace(/\//g, '-'));
+    } else {
+        nights = 1;
+    }
 
     updatePriceUI({ nights, guests, roomType });
 }

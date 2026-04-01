@@ -14,7 +14,9 @@ const defaultDates = [];
 if (checkin) defaultDates.push(parseYMD(checkin));
 if (checkout) defaultDates.push(parseYMD(checkout));
 
-flatpickr("#daterange", {
+const daterangeInput = document.querySelector("#daterange");
+
+flatpickr(daterangeInput, {
     mode: "range",
     dateFormat: "Y/m/d", // day/month/year
     allowInput: true,
@@ -23,10 +25,20 @@ flatpickr("#daterange", {
     onChange: function (selectedDates) {
         if (selectedDates.length === 2) {
             const [checkIn, checkOut] = selectedDates;
-            // Format dates in local time, avoids UTC shift
-            document.querySelector("#daterange").value =
+
+            // Update the input value
+            daterangeInput.value =
                 flatpickr.formatDate(checkIn, "Y/m/d") + " to " +
                 flatpickr.formatDate(checkOut, "Y/m/d");
+
+            // Update global nights for price calculation
+            nights = getNights(
+                flatpickr.formatDate(checkIn, "Y-m-d"),
+                flatpickr.formatDate(checkOut, "Y-m-d")
+            );
+
+            // Trigger recalculation
+            handleUpdate();
         }
     }
 });
