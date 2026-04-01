@@ -172,12 +172,21 @@ class Reservation
     {
         try {
             $result = $this->conn->execute_query(
-                "SELECT * FROM Reservations WHERE BookingToken = ?",
+                "SELECT * 
+             FROM Reservations 
+             WHERE BookingToken = ? 
+             AND StatusID IN (1, 2)  -- Only pending or confirmed reservations
+             LIMIT 1",
                 [$bookingToken]
             );
-            return $result;
+
+            $reservation = $result->fetch_assoc();
+
+            // Return null if no reservation found
+            return $reservation ?: null;
+
         } catch (Exception $e) {
-            throw new Exception("Failed to cancel reservation: " . $e->getMessage());
+            throw new Exception("Failed to retrieve reservation: " . $e->getMessage());
         }
     }
 
@@ -380,6 +389,8 @@ class Reservation
         $roomNumber = $details['RoomNumber'];
         $roomType = $details['RoomType'];
 
+        $cancelUrl = "http://hms.local/reservation/cancel/guest/{$bookingToken}";
+
         $mail = new PHPMailer(true);
 
         try {
@@ -404,6 +415,8 @@ class Reservation
             <strong>Room:</strong> {$roomType} (#{$roomNumber})<br>
             <strong>Check-in:</strong> {$checkIn}<br>
             <strong>Check-out:</strong> {$checkOut}<br><br>
+            If you need to cancel your reservation, please click the link below:<br>
+            <a href='{$cancelUrl}' target='_blank'>Cancel Reservation</a><br><br>
             Thank you for choosing our hotel.
         ";
 
@@ -415,4 +428,31 @@ class Reservation
             throw new Exception("Failed to send confirmation email: " . $mail->ErrorInfo);
         }
     }
+    public function cancelReservationGuest($bookingToken)
+    {
+        // Validate reservation exists and status allows cancellation
+        $result = $this->conn->execute_query("
+        SELECT ReservationID 
+        FROM Reservations
+        WHERE BookingToken = ?
+        AND StatusID IN (1, 2)
+        LIMIT 1
+    ", [$bookingToken]);
+
+        $reservation = $result->fetch_assoc();
+        if (!$reservation)
+            return false;
+
+        $reservationID = $reservation['ReservationID'];
+
+        // Call stored procedure to cancel
+        $this->conn->execute_query("CALL CancelReservation(?)", [$reservationID]);
+
+        // Flush multiple results if using mysqli
+        while ($this->conn->more_results() && $this->conn->next_result()) {
+        }
+
+        return true;
+    }
+
 }

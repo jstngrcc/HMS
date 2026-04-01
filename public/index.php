@@ -188,7 +188,21 @@ switch ($uri) {
         $pages->bookings();
         break;
 
+    case '/reservation/cancel/guest':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $pages->bookings();
+            exit;
+        }
+        $reservation->cancelGuest(); // you need to create this method
+        break;
+
     default:
+        // Router example
+        if (preg_match('#^/reservation/cancel/guest/([A-Za-z0-9_-]+)$#', $uri, $matches)) {
+            $bookingToken = $matches[1];
+            $reservation->showGuestCancelForm($bookingToken);
+            exit;
+        }
         if (preg_match('#^/reservation/([A-Za-z0-9_-]+)$#', $uri, $matches)) {
             $bookingToken = $matches[1];
 

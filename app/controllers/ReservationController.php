@@ -215,6 +215,60 @@ class ReservationController
             exit;
         }
     }
+    public function cancelGuest()
+    {
+        header('Content-Type: application/json');
 
+        $bookingToken = $_POST['booking_token'] ?? null;
+
+        if (!$bookingToken) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Missing booking token.'
+            ]);
+            exit;
+        }
+
+        $reservationModel = new Reservation($GLOBALS['conn']);
+        $reservation = $reservationModel->getGuestReservationByToken($bookingToken);
+
+        if (!$reservation) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid or non-cancellable reservation.'
+            ]);
+            exit;
+        }
+
+        try {
+            // If userId is null, treat as guest cancel
+            $reservationModel->cancelReservationGuest($bookingToken);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Reservation cancelled successfully.'
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to cancel reservation: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+
+    public function showGuestCancelForm($bookingToken)
+    {
+        $reservationModel = new Reservation($GLOBALS['conn']);
+        $reservation = $reservationModel->getGuestReservationByToken($bookingToken);
+
+        if (!$reservation) {
+            header('Location: /bookings');
+            exit;
+        }
+
+        // pass $reservation array to the view
+        require_once '../app/views/reservations/guest-cancel.view.php';
+    }
 }
 ?>

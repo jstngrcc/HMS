@@ -186,7 +186,9 @@ $statusMap = [
                 success: function (response) {
                     if (response.success) {
                         showToast('Reservation cancelled.');
-                        location.reload();
+                        setTimeout(function () {
+                            location.reload();
+                        }, 2000);
                     } else {
                         showToast('Error: ' + response.message);
                     }
