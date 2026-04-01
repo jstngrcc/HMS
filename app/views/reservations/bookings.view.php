@@ -1,3 +1,10 @@
+<?php 
+$paymentMethod = array(
+    "card"=> "Debit/Credit Card",
+    "online_payment"=> "QR-Ph",
+    "cash"=> "Cash"
+);
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -44,7 +51,7 @@
                 <thead>
                     <tr class="bg-[#FAFAFA] text-black">
                         <th class="py-2 px-4 border border-gray-400 text-left">Order Reference</th>
-                        <th class="py-2 px-4 border border-gray-400 text-left">Date</th>
+                        <th class="py-2 px-4 border border-gray-400 text-left">Booking Date</th>
                         <th class="py-2 px-4 border border-gray-400 text-left">Total Price</th>
                         <th class="py-2 px-4 border border-gray-400 text-left">Payment</th>
                         <th class="py-2 px-4 border border-gray-400 text-left">Status</th>
@@ -64,10 +71,10 @@
                                         : 'N/A' ?>
                                 </td>
                                 <td class="py-2 px-4 border border-gray-400">
-                                    <?= !empty($reservation['Amount']) ? '$' . number_format($reservation['Amount'], 2) : '0.00' ?>
+                                    <?= !empty($reservation['Amount']) ? '₱ ' . number_format($reservation['Amount'], 2) : '0.00' ?>
                                 </td>
                                 <td class="py-2 px-4 border border-gray-400">
-                                    <?= !empty($reservation['PaymentMethod']) ? htmlspecialchars($reservation['PaymentMethod']) : 'N/A' ?>
+                                    <?= !empty($paymentMethod[$reservation['PaymentMethod']]) ? htmlspecialchars($paymentMethod[$reservation['PaymentMethod']]) : 'N/A' ?>
                                 </td>
                                 <td class="py-2 px-4 border border-gray-400">
                                     <?= htmlspecialchars($reservation['ReservationStatus']) ?>

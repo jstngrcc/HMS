@@ -288,18 +288,10 @@
                                     <!-- E-Wallet -->
                                     <label
                                         class="flex items-center border-[0.5px] border-zinc-300 rounded p-4 cursor-pointer">
-                                        <img src="/assets/icons/e-wallet.svg" alt="E-wallet Icon" class="w-5 h-5 mr-2">
-                                        <span class="text-black text-xs font-normal font-roboto">E-Wallet</span>
+                                        <img src="/assets/icons/qr.svg" alt="E-wallet Icon" class="w-5 h-5 mr-2">
+                                        <span class="text-black text-xs font-normal font-roboto">QR-Ph</span>
                                         <input type="radio" name="payment" value="E-Wallet"
                                             class="accent-[#714623] ml-auto">
-                                    </label>
-
-                                    <!-- Bank Transfer -->
-                                    <label
-                                        class="flex items-center border-[0.5px] border-zinc-300 rounded p-4 cursor-pointer">
-                                        <img src="/assets/icons/bank.svg" alt="Bank Icon" class="w-5 h-5 mr-2">
-                                        <span class="text-black text-xs font-normal font-roboto">Bank Transfer</span>
-                                        <input type="radio" name="payment" value="Bank" class="accent-[#714623] ml-auto">
                                     </label>
                                 </div>
 
@@ -336,7 +328,7 @@
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 min-h-screen overflow-auto opacity-0 pointer-events-none transition-opacity duration-200">
         <!-- <div id="payment-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"> -->
         <div class="bg-white rounded-lg w-96 p-6 relative">
-            <button id="modal-close" class="absolute top-3 right-3 text-gray-500 hover:text-black">&times;</button>
+            <button id="modal-close" class="absolute top-3 right-3 text-gray-500 hover:text-black cursor-pointer">&times;</button>
             <h2 class="text-xl font-bold mb-4" id="payment-modal-title">Payment</h2>
             <div id="payment-modal-content" class="space-y-4">
                 <!-- Dynamic content will be injected here -->
