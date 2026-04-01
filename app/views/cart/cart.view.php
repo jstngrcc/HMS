@@ -328,7 +328,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex flex-col border-[0.3px] border-zinc-300 rounded w-2/5 p-8" id="cart-summary-right">
+                <div class="self-start flex flex-col border-[0.3px] border-zinc-300 rounded w-2/5 p-8" id="cart-summary-right">
                     <h2 class="font-semibold font-crimson text-2xl mb-4">Price Breakdown</h2>
                     <div class="text-sm font-roboto" id="price-breakdown-list"></div>
                     <div class="mt-4 font-semibold text-lg" id="cart-total">Total: ₱0.00</div>
