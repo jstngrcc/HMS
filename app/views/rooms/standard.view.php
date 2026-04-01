@@ -45,7 +45,6 @@ if (!empty($checkinStr) && strpos($checkinStr, ' to ') !== false) {
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 
-<!-- TODO: Allow adding to cart if different date, instead of checking roomID existence -->
 <!-- Booking Confirmation Modal -->
 <div id="booking-modal" class="fixed inset-0 hidden items-start pt-15 justify-center bg-[rgba(0,0,0,0.7)]  z-50">
     <div class="flex">

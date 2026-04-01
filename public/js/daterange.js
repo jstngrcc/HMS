@@ -16,17 +16,17 @@ if (checkout) defaultDates.push(parseYMD(checkout));
 
 flatpickr("#daterange", {
     mode: "range",
-    dateFormat: "Y/m/d", // enforce YYYY/MM/DD
+    dateFormat: "Y/m/d", // day/month/year
     allowInput: true,
     minDate: "today",
     defaultDate: defaultDates.length ? defaultDates : null,
     onChange: function (selectedDates) {
         if (selectedDates.length === 2) {
             const [checkIn, checkOut] = selectedDates;
-            // Update the input to use YYYY/MM/DD
+            // Format dates in local time, avoids UTC shift
             document.querySelector("#daterange").value =
-                checkIn.toISOString().slice(0, 10).replace(/-/g, "/") + " to " +
-                checkOut.toISOString().slice(0, 10).replace(/-/g, "/");
+                flatpickr.formatDate(checkIn, "Y/m/d") + " to " +
+                flatpickr.formatDate(checkOut, "Y/m/d");
         }
     }
 });

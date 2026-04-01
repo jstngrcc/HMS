@@ -92,10 +92,6 @@ class SearchController
             }
         }
 
-        // Debug: log to browser console
-        echo "<script>console.log('Checkin: " . ($filters['checkin'] ?? '') . "');</script>";
-        echo "<script>console.log('Checkout: " . ($filters['checkout'] ?? '') . "');</script>";
-
         // Fetch rooms
         $rooms = $roomModel->searchAvailable($filters);
         $cartCount = $this->getCartCount();
@@ -131,10 +127,13 @@ class SearchController
         $dates = explode(" to ", $range);
         if (count($dates) !== 2)
             return [null, null];
-        $checkinObj = DateTime::createFromFormat('d/m/Y', trim($dates[0]));
-        $checkoutObj = DateTime::createFromFormat('d/m/Y', trim($dates[1]));
+
+        $checkinObj = DateTime::createFromFormat('Y/m/d', trim($dates[0]));
+        $checkoutObj = DateTime::createFromFormat('Y/m/d', trim($dates[1]));
+
         if (!$checkinObj || !$checkoutObj)
             return [null, null];
+
         return [
             $checkinObj->format('Y-m-d'),
             $checkoutObj->format('Y-m-d')
