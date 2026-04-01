@@ -49,6 +49,12 @@
 
                                         if ($roomType === 'Standard Single' || $roomType === 'Standard Double') {
                                             $imagePath = '/assets/images/standard.jpg';
+                                        } 
+                                        if ($roomType === 'Deluxe Single' || $roomType === 'Deluxe Double') {
+                                            $imagePath = '/assets/images/deluxe.jpg';
+                                        }
+                                        if ($roomType === 'Suite Single' || $roomType === 'Suite Double') {
+                                            $imagePath = '/assets/images/suite.jpg';
                                         }
                                         ?>
                                         <div class="flex gap-8">
@@ -381,6 +387,12 @@
                 let extraGuests = 0;
                 if (roomType === 'Standard Single') extraGuests = Math.max(0, numGuests - 1);
                 else if (roomType === 'Standard Double') extraGuests = Math.max(0, numGuests - 2);
+
+                if (roomType === 'Deluxe Single') extraGuests = Math.max(0, numGuests - 1);
+                else if (roomType === 'Deluxe Double') extraGuests = Math.max(0, numGuests - 2);
+
+                if (roomType === 'Suite Single') extraGuests = Math.max(0, numGuests - 1);
+                else if (roomType === 'Suite Double') extraGuests = Math.max(0, numGuests - 2);
 
                 let guestCharge = basePrice * 0.10 * extraGuests * nights;
 
