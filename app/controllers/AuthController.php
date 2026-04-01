@@ -79,7 +79,9 @@ class AuthController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fname = trim($_POST['fname']);
             $lname = trim($_POST['lname']);
-            $phone = trim($_POST['phone']);
+            $country = trim($_POST['country_code']);
+            $phoneNo = trim($_POST['phone']);
+            $phone = $country . $phoneNo;
             $birthDate = trim($_POST['birthDate']);
             $email = trim($_POST['email']);
             $password = trim($_POST['password']);
@@ -239,7 +241,9 @@ class AuthController
 
         $fname = trim($_POST['fname'] ?? '');
         $lname = trim($_POST['lname'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
+        $country = trim($_POST['country_code'] ?? '');
+        $phoneNo = trim($_POST['phone'] ?? '');
+        $phone = $country . $phoneNo;
         $birthDate = trim($_POST['birthDate'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $currentPassword = trim($_POST['passwordc'] ?? '');

@@ -33,7 +33,7 @@
 
         <div class="flex justify-center gap-5 font-roboto">
             <div
-                class="flex-1 bg-linear-to-tl from-[#FCEDB5] to-[#40331F] rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] max-h-98">
+                class="flex-1 bg-linear-to-tl from-[#FCEDB5] to-[#40331F] rounded shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] max-h-86">
                 <form method="POST" action="/search">
                     <div class="flex flex-col gap-2 p-5">
                         <!-- Check-in/Check-out -->

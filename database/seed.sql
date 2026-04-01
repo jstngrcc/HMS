@@ -26,7 +26,7 @@ INSERT INTO PaymentMethods (MethodName) VALUES
 -- Admin User
 -- =========================
 INSERT INTO Guests (Email, FirstName, LastName, PhoneContact, BirthDate) VALUES 
-('admin@hotel.com', 'Admin', 'Admin', '000-000-0000', '2005-11-28');
+('admin@hotel.com', 'Admin', 'Admin', '+630000000000', '2005-11-28');
 
 INSERT INTO Users (GuestID, RoleID, Email, PasswordHash) VALUES
 (1, 1, 'admin@hotel.com', '$2y$10$44eM8DEp1PQZAU1cpOwtGu1HBFrDOXXR4XfjXbBCoBS6iZNk2bwQ2');

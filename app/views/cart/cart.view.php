@@ -189,11 +189,20 @@
                                                 <label for="fname">First Name* </label>
                                                 <input type="text" id="fname" name="fname" required
                                                     class="border border-gray-300 p-2 rounded w-full text-black bg-white">
-                                                <!-- TODO: standardize the phone contact -->
                                                 <label for="phone">Phone Contact* </label>
-                                                <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" id="phone" name="phone"
-                                                    placeholder="000-000-0000" required
-                                                    class="border border-gray-300 p-2 rounded w-full text-black bg-white">
+                                                <div class="flex gap-2">
+                                                    <select name="country_code" id="country_code" required
+                                                        class="border border-gray-300 p-2 rounded bg-white text-black w-28">
+                                                        <option value="+63" selected>🇵🇭 +63</option>
+                                                        <option value="+1">🇺🇸 +1</option>
+                                                        <option value="+44">🇬🇧 +44</option>
+                                                        <option value="+61">🇦🇺 +61</option>
+                                                    </select>
+
+                                                    <input type="tel" name="phone" id="phone" placeholder="9123456789"
+                                                        pattern="[0-9]{7,12}" required
+                                                        class="border border-gray-300 p-2 rounded w-full text-black bg-white">
+                                                </div>
                                                 <label for="birthDate">Birthdate* </label>
                                                 <input type="text" id="birthDate" name="birthDate" id="birthDate"
                                                     placeholder="Select your birthdate" required
@@ -224,9 +233,19 @@
                                                 <input type="text" id="fname" name="fname" required
                                                     class="border border-gray-300 p-2 rounded w-full text-black bg-white">
                                                 <label for="phone">Phone Contact* </label>
-                                                <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" id="phone" name="phone"
-                                                    placeholder="000-000-0000" required
-                                                    class="border border-gray-300 p-2 rounded w-full text-black bg-white">
+                                                <div class="flex gap-2">
+                                                    <select name="country_code" id="country_code" required
+                                                        class="border border-gray-300 p-2 rounded bg-white text-black w-28">
+                                                        <option value="+63" selected>🇵🇭 +63</option>
+                                                        <option value="+1">🇺🇸 +1</option>
+                                                        <option value="+44">🇬🇧 +44</option>
+                                                        <option value="+61">🇦🇺 +61</option>
+                                                    </select>
+
+                                                    <input type="tel" name="phone" id="phone" placeholder="9123456789"
+                                                        pattern="[0-9]{7,12}" required
+                                                        class="border border-gray-300 p-2 rounded w-full text-black bg-white">
+                                                </div>
                                                 <label for="birthDate">Birthdate* </label>
                                                 <input type="text" id="birthDate" name="birthDate" id="birthDate"
                                                     placeholder="Select your birthdate" required
@@ -328,7 +347,8 @@
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 min-h-screen overflow-auto opacity-0 pointer-events-none transition-opacity duration-200">
         <!-- <div id="payment-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"> -->
         <div class="bg-white rounded-lg w-96 p-6 relative">
-            <button id="modal-close" class="absolute top-3 right-3 text-gray-500 hover:text-black cursor-pointer">&times;</button>
+            <button id="modal-close"
+                class="absolute top-3 right-3 text-gray-500 hover:text-black cursor-pointer">&times;</button>
             <h2 class="text-xl font-bold mb-4" id="payment-modal-title">Payment</h2>
             <div id="payment-modal-content" class="space-y-4">
                 <!-- Dynamic content will be injected here -->
@@ -528,11 +548,32 @@
                         success: function (res) {
                             if (res.success) {
                                 const data = res.data;
-                                $('input[name="fname"]').val(data.FirstName);
-                                $('input[name="lname"]').val(data.LastName);
-                                $('input[name="phone"]').val(data.PhoneContact);
-                                $('input[name="email"]').val(data.Email);
-                                $('#birthDate').flatpickr().setDate(data.BirthDate, true);
+
+                                $('input[name="fname"]').val(data.FirstName || '');
+                                $('input[name="lname"]').val(data.LastName || '');
+                                $('input[name="email"]').val(data.Email || '');
+                                $('#birthDate').flatpickr().setDate(data.BirthDate || '', true);
+
+                                // ================== PHONE ==================
+                                let fullPhone = data.PhoneContact || '';
+                                fullPhone = fullPhone.replace(/[^0-9+]/g, ''); // clean input
+
+                                let countryCode = '+63'; // default
+                                let localNumber = fullPhone;
+
+                                // Match country codes exactly from your dropdown
+                                const countryOptions = ['+63', '+1', '+44', '+61'];
+                                for (let code of countryOptions) {
+                                    if (fullPhone.startsWith(code)) {
+                                        countryCode = code;
+                                        localNumber = fullPhone.slice(code.length);
+                                        break;
+                                    }
+                                }
+
+                                $('select[name="country_code"]').val(countryCode);
+                                $('input[name="phone"]').val(localNumber);
+
                             } else showToast(res.error, 'error');
                         },
                         error: function () {
@@ -540,8 +581,10 @@
                         }
                     });
                 } else {
+                    // clear inputs
                     $('input[name="fname"], input[name="lname"], input[name="phone"], input[name="email"]').val('');
                     $('#birthDate').flatpickr().clear();
+                    $('select[name="country_code"]').val('+63'); // reset default
                 }
             });
 
@@ -606,11 +649,12 @@
             // ==================== RESERVATION SUBMIT ====================
             $("#reservation-form").submit(function (e) {
                 e.preventDefault();
+                const phoneFull = $("#country_code").val() + $("#phone").val();
                 const guestData = {
                     fname: $("#fname").val(),
                     lname: $("#lname").val(),
                     email: $("#email").val(),
-                    phone: $("#phone").val(),
+                    phone: phoneFull,
                     birthDate: $("#birthDate").val()
                 };
 

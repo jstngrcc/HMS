@@ -122,38 +122,89 @@ class Reservation
         }
     }
 
-    public function showReservations() {
+    public function showReservations()
+    {
         try {
+            $userID = $_SESSION["logged_in_user_id"];
+
             $result = $this->conn->execute_query(
                 "SELECT
-                    r.ReservationID,
-                    r.BookingToken,
-                    rs.StatusName AS ReservationStatus,
-                    pm.MethodName AS PaymentMethod,
-                    p.Amount,
-                    p.PaymentDate,
-                    r.CreatedAt
-                FROM Users u
-                INNER JOIN Guests g ON u.GuestID = g.GuestID
-                INNER JOIN Reservations r ON g.GuestID = r.GuestID
-                INNER JOIN ReservationStatus rs ON r.StatusID = rs.StatusID
-                LEFT JOIN Payments p ON r.ReservationID = p.ReservationID
-                LEFT JOIN PaymentMethods pm ON p.MethodID = pm.MethodID
-                WHERE u.UserID = ?",
-                [$_SESSION["logged_in_user_id"]]
+                r.ReservationID,
+                r.BookingToken,
+                rs.StatusName AS ReservationStatus,
+                pm.MethodName AS PaymentMethod,
+                p.Amount,
+                p.PaymentDate,
+                r.CreatedAt,
+                g.FirstName AS GuestFirstName,
+                g.LastName AS GuestLastName,
+                g.Email AS GuestEmail
+            FROM Reservations r
+            INNER JOIN Guests g ON r.GuestID = g.GuestID
+            INNER JOIN ReservationStatus rs ON r.StatusID = rs.StatusID
+            LEFT JOIN Payments p ON r.ReservationID = p.ReservationID
+            LEFT JOIN PaymentMethods pm ON p.MethodID = pm.MethodID
+            INNER JOIN UserReservations ur ON r.ReservationID = ur.ReservationID
+            WHERE ur.UserID = ?",
+                [$userID]
             );
 
             if (!$result) {
-                throw new Exception("Error retrieving reservations: ". $this->conn->error);
+                throw new Exception("Error retrieving reservations: " . $this->conn->error);
             }
 
             if ($result->num_rows === 0) {
                 return [];
             }
-        
+
             return $result->fetch_all(MYSQLI_ASSOC);
+
         } catch (Exception $e) {
-            throw new Exception("Error retrieving reservations: ". $e->getMessage());
+            throw new Exception("Error retrieving reservations: " . $e->getMessage());
         }
     }
+
+    public function getReservationsForUser($userID)
+    {
+        $result = $this->conn->execute_query(
+            "SELECT r.* 
+         FROM Reservations r
+         JOIN UserReservations ur ON r.ReservationID = ur.ReservationID
+         WHERE ur.UserID = ?",
+            [$userID]
+        );
+
+        $reservations = [];
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $reservations[] = $row;
+            }
+        }
+
+        return $reservations;
+    }
+    public function linkReservationToUser($reservationID, $userID)
+    {
+        $result = $this->conn->execute_query(
+            "INSERT INTO UserReservations (UserID, ReservationID) VALUES (?, ?)",
+            [$userID, $reservationID]
+        );
+
+        if (!$result) {
+            throw new Exception("Failed to link reservation to user: " . $this->conn->error);
+        }
+
+        return true;
+    }
+
+    public function isReservationLinkedToUser($reservationID, $userID)
+    {
+        $result = $this->conn->execute_query(
+            "SELECT 1 FROM UserReservations WHERE ReservationID = ? AND UserID = ?",
+            [$reservationID, $userID]
+        );
+
+        return $result && $result->num_rows > 0;
+    }
+
 }

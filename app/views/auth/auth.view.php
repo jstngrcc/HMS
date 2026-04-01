@@ -24,7 +24,8 @@
                 <img src="/assets/icons/home.svg" alt="Home" class="w-4 h-4">
             </a>
 
-            <a href="/registration" class="flex items-center border border-neutral-300 border-l-0 px-4 py-1 bg-[#F6F6F6]">
+            <a href="/registration"
+                class="flex items-center border border-neutral-300 border-l-0 px-4 py-1 bg-[#F6F6F6]">
                 Authentication
             </a>
         </div>
@@ -48,10 +49,22 @@
                     <input type="text" name="lname" required
                         class="border border-gray-300 p-2 rounded w-full text-black bg-white">
                     <br>
-                    <label for="phone">Phone Contact: </label>
-                    <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" name="phone" placeholder="000-000-0000"
-                        required class="border border-gray-300 p-2 rounded w-full text-black bg-white">
-                    <br>
+                    <label>Phone Contact:</label>
+
+                    <div class="flex gap-2">
+                        <!-- Country Code -->
+                        <select name="country_code" required
+                            class="border border-gray-300 p-2 rounded bg-white text-black w-28">
+                            <option value="+63" selected>🇵🇭 +63</option>
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+44">🇬🇧 +44</option>
+                            <option value="+61">🇦🇺 +61</option>
+                        </select>
+
+                        <!-- Local Number -->
+                        <input type="tel" name="phone" placeholder="9123456789" pattern="[0-9]{7,12}" required
+                            class="border border-gray-300 p-2 rounded w-full text-black bg-white">
+                    </div>
                     <label for="birthDate">Birthday: </label>
                     <input type="text" id="birthDate" name="birthDate" placeholder="Select your birthdate" required
                         class="border border-gray-300 p-2 rounded w-full text-black bg-white">

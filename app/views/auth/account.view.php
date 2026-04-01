@@ -44,23 +44,30 @@
                             <label for="fname">First Name* </label>
                             <input type="text" name="fname"
                                 class="border border-gray-300 p-2 rounded w-full text-black bg-white">
-                            <br>
                             <label for="lname">Last Name* </label>
                             <input type="text" name="lname"
                                 class="border border-gray-300 p-2 rounded w-full text-black bg-white">
-                            <br>
                             <label for="phone">Phone Contact* </label>
-                            <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" name="phone" placeholder="000-000-0000"
-                                class="border border-gray-300 p-2 rounded w-full text-black bg-white">
-                            <br>
+                            <div class="flex gap-2">
+                                <!-- Country Code -->
+                                <select name="country_code" required
+                                    class="border border-gray-300 p-2 rounded bg-white text-black w-28">
+                                    <option value="+63" selected>🇵🇭 +63</option>
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+44">🇬🇧 +44</option>
+                                    <option value="+61">🇦🇺 +61</option>
+                                </select>
+
+                                <!-- Local Number -->
+                                <input type="tel" name="phone" placeholder="9123456789" pattern="[0-9]{7,12}" required
+                                    class="border border-gray-300 p-2 rounded w-full text-black bg-white">
+                            </div>
                             <label for="birthDate">Birthdate* </label>
                             <input type="text" id="birthDate" name="birthDate" placeholder="Select your birthdate"
                                 class="border border-gray-300 p-2 rounded w-full text-black bg-white">
-                            <br>
                             <label for="email">Email* </label>
                             <input type="email" name="email"
                                 class="border border-gray-300 p-2 rounded w-full text-black bg-white">
-                            <br>
                         </div>
                         <div class="flex flex-col gap-2 w-1/4 mr-50">
                             <label for="passwordc">Current Password*</label>

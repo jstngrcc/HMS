@@ -230,6 +230,9 @@
   .invisible {
     visibility: hidden;
   }
+  .visible {
+    visibility: visible;
+  }
   .sr-only {
     position: absolute;
     width: 1px;
@@ -496,6 +499,15 @@
   .h-px {
     height: 1px;
   }
+  .max-h-84 {
+    max-height: calc(var(--spacing) * 84);
+  }
+  .max-h-86 {
+    max-height: calc(var(--spacing) * 86);
+  }
+  .max-h-88 {
+    max-height: calc(var(--spacing) * 88);
+  }
   .max-h-98 {
     max-height: calc(var(--spacing) * 98);
   }
@@ -519,6 +531,9 @@
   }
   .w-1\/4 {
     width: calc(1 / 4 * 100%);
+  }
+  .w-1\/5 {
+    width: calc(1 / 5 * 100%);
   }
   .w-2 {
     width: calc(var(--spacing) * 2);
@@ -544,14 +559,23 @@
   .w-8 {
     width: calc(var(--spacing) * 8);
   }
+  .w-10 {
+    width: calc(var(--spacing) * 10);
+  }
   .w-12 {
     width: calc(var(--spacing) * 12);
+  }
+  .w-20 {
+    width: calc(var(--spacing) * 20);
   }
   .w-22 {
     width: calc(var(--spacing) * 22);
   }
   .w-24 {
     width: calc(var(--spacing) * 24);
+  }
+  .w-25 {
+    width: calc(var(--spacing) * 25);
   }
   .w-28 {
     width: calc(var(--spacing) * 28);

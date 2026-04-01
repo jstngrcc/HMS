@@ -154,6 +154,14 @@ CREATE TABLE IF NOT EXISTS ReservationRooms (
     FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID)
 );
 
+CREATE TABLE IF NOT EXISTS UserReservations (
+    UserReservationID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT NOT NULL,
+    ReservationID INT NOT NULL,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    FOREIGN KEY (ReservationID) REFERENCES Reservations(ReservationID)
+);
+
 -- =========================
 -- PAYMENT METHODS
 -- =========================

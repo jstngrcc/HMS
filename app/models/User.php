@@ -410,6 +410,49 @@ class User
             throw new Exception("Failed to update guest details.");
         }
     }
-}
+    // =========================
+// Check if a guest exists by email
+// =========================
+    public function getGuestEmailByID($guestID)
+    {
+        $result = $this->conn->execute_query(
+            "SELECT Email FROM Guests WHERE GuestID = ?",
+            [$guestID]
+        );
 
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_object()->Email;
+        }
+        return null;
+    }
+
+    // =========================
+// Link a reservation to a user
+// =========================
+    public function linkReservationToUser($reservationID, $userID)
+    {
+        $result = $this->conn->execute_query(
+            "INSERT INTO UserReservations (UserID, ReservationID) VALUES (?, ?)",
+            [$userID, $reservationID]
+        );
+
+        if (!$result) {
+            throw new Exception("Failed to link reservation to user: " . $this->conn->error);
+        }
+
+        return true;
+    }
+
+    public function isReservationLinkedToUser($reservationID, $userID)
+    {
+        $result = $this->conn->execute_query(
+            "SELECT 1 FROM UserReservations WHERE ReservationID = ? AND UserID = ?",
+            [$reservationID, $userID]
+        );
+
+        return $result && $result->num_rows > 0;
+    }
+
+
+}
 ?>

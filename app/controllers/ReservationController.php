@@ -33,7 +33,9 @@ class ReservationController
         $email = trim($guest['email'] ?? '');
         $fname = trim($guest['fname'] ?? '');
         $lname = trim($guest['lname'] ?? '');
-        $phone = trim($guest['phone'] ?? '');
+        $country = trim($guest['country_code'] ?? '');
+        $phoneNo = trim($guest['phone'] ?? '');
+        $phone = $country . $phoneNo;
         $birthDate = trim($guest['birthDate'] ?? '');
         $totalAmount = trim($input['totalAmount']);
 
@@ -63,22 +65,25 @@ class ReservationController
         try {
             if (!$_SESSION['logged_in_user_id']) {
                 $guestIDObj = $userModel->createGuest($email, $fname, $lname, $phone, $birthDate);
-                if (!$guestIDObj) {
-                    echo json_encode([
-                        'success' => false,
-                        'error' => "Could not create guest."
-                    ]);
-                    return;
-                }
-                $guestID = is_object($guestIDObj) ? $guestIDObj->GuestID : $guestIDObj;
+                $guestID = $guestIDObj->GuestID ?? $guestIDObj;
             } else {
-                $guestIDObj = $userModel->getGuestIDbyUserID($_SESSION['logged_in_user_id']);
-                $guestID = is_object($guestIDObj) ? $guestIDObj->GuestID : $guestIDObj;
+                $currentUserGuestIDObj = $userModel->getGuestIDbyUserID($_SESSION['logged_in_user_id']);
+                $currentUserEmail = $userModel->getGuestEmailByID($currentUserGuestIDObj->GuestID);
+
+                if ($email !== $currentUserEmail) {
+                    // booking for someone else
+                    $guestIDObj = $userModel->createGuest($email, $fname, $lname, $phone, $birthDate);
+                    $guestID = $guestIDObj->GuestID ?? $guestIDObj;
+                } else {
+                    $guestID = $currentUserGuestIDObj->GuestID;
+                }
             }
             $reservationData = $reservationModel->createReservation($guestID, $paymentMethodID, $totalAmount);
 
             $reservationID = $reservationData['ReservationID'] ?? null;
             $bookingToken = $reservationData['BookingToken'] ?? null;
+            // optionally link to user
+            $reservationModel->linkReservationToUser($reservationID, $_SESSION['logged_in_user_id']);
             if (!$reservationID || !$bookingToken) {
                 echo json_encode([
                     'success' => false,
