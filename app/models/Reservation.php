@@ -1,4 +1,6 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class Reservation
 {
@@ -360,5 +362,57 @@ class Reservation
             [$reservationID]
         );
         return $result->fetch_assoc();
+    }
+
+    public function sendReservationConfirmation($guestEmail, $bookingToken)
+    {
+        // Fetch reservation details
+        $reservationDetails = $this->getReservationWithGuest($bookingToken);
+
+        if (empty($reservationDetails)) {
+            throw new Exception("Reservation not found for the provided token.");
+        }
+
+        $details = $reservationDetails[0]; // Take the first row
+        $guestName = $details['FirstName'] . ' ' . $details['LastName'];
+        $checkIn = date('Y-m-d', strtotime($details['CheckInDate']));
+        $checkOut = date('Y-m-d', strtotime($details['CheckOutDate']));
+        $roomNumber = $details['RoomNumber'];
+        $roomType = $details['RoomType'];
+
+        $mail = new PHPMailer(true);
+
+        try {
+            $mail->isSMTP();
+            $mail->Host = $_ENV['MAIL_HOST'];
+            $mail->SMTPAuth = true;
+            $mail->Username = $_ENV['MAIL_USERNAME'];
+            $mail->Password = $_ENV['MAIL_PASSWORD'];
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = $_ENV['MAIL_PORT'];
+
+            $mail->setFrom($_ENV['MAIL_FROM'], $_ENV['MAIL_FROM_NAME']);
+            $mail->addAddress($guestEmail);
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Reservation Confirmation';
+
+            $mail->Body = "
+            Dear {$guestName},<br><br>
+            Your reservation has been confirmed.<br>
+            <strong>Booking Token:</strong> {$bookingToken}<br>
+            <strong>Room:</strong> {$roomType} (#{$roomNumber})<br>
+            <strong>Check-in:</strong> {$checkIn}<br>
+            <strong>Check-out:</strong> {$checkOut}<br><br>
+            Thank you for choosing our hotel.
+        ";
+
+            $mail->AltBody = "Dear {$guestName},\n\nYour reservation has been confirmed.\nBooking Token: {$bookingToken}\nRoom: {$roomType} (#{$roomNumber})\nCheck-in: {$checkIn}\nCheck-out: {$checkOut}\n\nThank you for choosing our hotel.";
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("Failed to send confirmation email: " . $mail->ErrorInfo);
+        }
     }
 }

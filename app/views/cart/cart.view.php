@@ -699,6 +699,8 @@
                     return;
                 }
 
+                showToast("Please wait...", "info");
+
                 $.ajax({
                     url: "/reservation-submit",
                     type: "POST",

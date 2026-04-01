@@ -96,6 +96,14 @@ class ReservationController
             // Remove cart items
             $cartModel->removeCartItems($cartID);
 
+            if (!isset($_SESSION['logged_in_user_id'])) {
+                $reservationModel->sendReservationConfirmation($email, $reservationData['BookingToken']);
+            } else {
+                $currentUserGuestIDObj = $userModel->getGuestIDbyUserID($_SESSION['logged_in_user_id']);
+                $currentUserEmail = $userModel->getGuestEmailByID($currentUserGuestIDObj->GuestID);
+                $reservationModel->sendReservationConfirmation($currentUserEmail, $reservationData['BookingToken']);
+            }
+
             echo json_encode([
                 "success" => true,
                 "message" => "Reservation completed successfully.",
