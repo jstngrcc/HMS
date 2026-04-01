@@ -356,27 +356,15 @@ BEGIN
     DECLARE roomID INT;
     DECLARE done INT DEFAULT 0;
 
-    DECLARE roomCursor CURSOR FOR
-        SELECT RoomID
-        FROM ReservationRooms 
-        WHERE ReservationID = pReservationID;
-
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
     START TRANSACTION;
 
-    OPEN roomCursor;
-    read_loop: LOOP
-        FETCH roomCursor INTO roomID;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-
-        UPDATE Rooms
-        SET Status = 'available'
-        WHERE RoomID = roomID;
-    END LOOP;
-    CLOSE roomCursor;
+    UPDATE Rooms
+    SET Status = 'available'
+    WHERE RoomID IN (
+        SELECT RoomID 
+        FROM ReservationRooms 
+        WHERE ReservationID = pReservationID
+    );
 
     UPDATE Reservations
     SET StatusID = 5

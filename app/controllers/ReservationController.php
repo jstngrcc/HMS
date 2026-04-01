@@ -154,5 +154,59 @@ class ReservationController
 
         require __DIR__ . '/../views/reservations/reservation-details.view.php';
     }
+
+    public function cancel()
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode([
+                "success" => false,
+                "error" => "Invalid request method."
+            ]);
+            exit;
+        }
+
+        if (!isset($_SESSION['logged_in_user_id'])) {
+            echo json_encode([
+                "success" => false,
+                "error" => "Unauthorized. Please log in."
+            ]);
+            exit;
+        }
+
+        $bookingToken = $_POST['booking_token'] ?? null;
+
+        if (!$bookingToken) {
+            echo json_encode([
+                "success" => false,
+                "error" => "Missing booking token."
+            ]);
+            exit;
+        }
+
+        try {
+            $reservationModel = new Reservation($GLOBALS['conn']);
+            $userModel = new User($GLOBALS['conn']);
+
+            // Call your model method that executes the CancelReservation procedure
+            $currentUserGuestIDObj = $userModel->getGuestIDbyUserID($_SESSION['logged_in_user_id']);
+            $reservationModel->cancelReservation($bookingToken, $currentUserGuestIDObj->GuestID);
+
+            echo json_encode([
+                "success" => true,
+                "message" => "Reservation cancelled successfully."
+            ]);
+            exit;
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "error" => $e->getMessage()
+            ]);
+            exit;
+        }
+    }
+
 }
 ?>

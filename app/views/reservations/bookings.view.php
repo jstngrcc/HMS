@@ -64,6 +64,7 @@ $statusMap = [
                         <th class="py-2 px-4 border border-gray-400 text-left">Total Price</th>
                         <th class="py-2 px-4 border border-gray-400 text-left">Payment</th>
                         <th class="py-2 px-4 border border-gray-400 text-left">Status</th>
+                        <th class="py-2 px-4 border border-gray-400 text-left">Actions</th>
                         <th class="py-2 px-4 border border-gray-400 text-left">Information</th>
                     </tr>
                 </thead>
@@ -96,6 +97,22 @@ $statusMap = [
                                     </div>
                                 </td>
                                 <td class="py-2 px-4 border border-gray-400">
+                                    <?php if (in_array($reservation['ReservationStatus'], ['pending', 'confirmed'])): ?>
+                                        <form method="POST" action="/reservation/cancel"
+                                            onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                                            <input type="hidden" name="booking_token"
+                                                value="<?= htmlspecialchars($reservation['BookingToken']) ?>">
+                                            <button type="button"
+                                                onclick="openCancelModal('<?= htmlspecialchars($reservation['BookingToken']) ?>')"
+                                                class="text-red-600 hover:underline cursor-pointer">
+                                                Cancel
+                                            </button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="text-gray-400 text-sm">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-2 px-4 border border-gray-400">
                                     <a href="/reservation/<?= urlencode($reservation['BookingToken']) ?>"
                                         class="text-blue-600 hover:underline">View Details</a>
                                 </td>
@@ -119,7 +136,75 @@ $statusMap = [
     <?php endif; ?>
     </div>
 
+
+    <div id="cancelModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-96 shadow-lg">
+            <h2 class="text-lg font-semibold mb-4">Cancel Booking</h2>
+            <p class="text-sm text-gray-600 mb-6">
+                Are you sure you want to cancel this booking?
+            </p>
+
+            <div class="flex justify-end gap-3">
+                <button onclick="closeCancelModal()"
+                    class="px-4 py-1 border border-gray-300 rounded hover:bg-gray-100 cursor-pointer">
+                    No
+                </button>
+
+                <form id="cancelForm">
+                    <input type="hidden" name="booking_token" id="cancelBookingToken">
+                    <button type="submit"
+                        class="px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer">
+                        Yes, Cancel
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
     <?php require_once __DIR__ . '/../components/footer.view.php'; ?>
+    <script>
+        function openCancelModal(token) {
+            $('#cancelBookingToken').val(token);
+            $('#cancelModal').removeClass('hidden').addClass('flex');
+        }
+
+        function closeCancelModal() {
+            $('#cancelModal').addClass('hidden').removeClass('flex');
+        }
+
+        // Close modal when clicking outside
+        $('#cancelModal').on('click', function (e) {
+            if (e.target === this) closeCancelModal();
+        });
+
+        // AJAX cancel function
+        function confirmCancel(token) {
+            $.ajax({
+                url: '/reservation/cancel',
+                type: 'POST',
+                data: { booking_token: token },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        showToast('Reservation cancelled.');
+                        location.reload();
+                    } else {
+                        showToast('Error: ' + response.message);
+                    }
+                },
+                error: function (xhr) {
+                    showToast('Error: ' + xhr.status + ' ' + xhr.statusText);
+                }
+            });
+        }
+
+        // Submit handler
+        $('#cancelForm').on('submit', function (e) {
+            e.preventDefault(); // prevent normal form submission
+            const token = $('#cancelBookingToken').val();
+            confirmCancel(token); // call AJAX
+            closeCancelModal(); // optionally close immediately
+        });
+    </script>
 </body>
 
 </html>

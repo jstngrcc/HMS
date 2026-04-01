@@ -124,29 +124,33 @@ class Reservation
             throw new Exception('Failed to retrieve procedure output: ' . $this->conn->error);
         }
     }
-    public function cancelReservation($reservationID = null, $bookingToken = null)
+    public function cancelReservation($bookingToken, $guestID)
     {
-        try {
-            if ($bookingToken) {
-                $result = $this->conn->execute_query(
-                    "CALL CancelReservationGuest(?)",
-                    [$bookingToken]
-                );
-            } elseif ($reservationID) {
-                $result = $this->conn->execute_query(
-                    "CALL CancelReservation(?)",
-                    [$reservationID]
-                );
-            } else {
-                throw new Exception("Either reservation ID or booking token must be provided.");
-            }
+        // Step 1: Get ReservationID (validate ownership + status)
+        $result = $this->conn->execute_query("
+        SELECT ReservationID 
+        FROM Reservations
+        WHERE BookingToken = ?
+        AND GuestID = ?
+        AND StatusID IN (1, 2)
+        LIMIT 1
+    ", [$bookingToken, $guestID]);
 
-            if (!$result) {
-                throw new Exception("Failed to cancel reservation: " . $this->conn->error);
-            }
-        } catch (Exception $e) {
-            throw new Exception("Failed to cancel reservation: " . $e->getMessage());
+        $reservation = $result->fetch_assoc();
+
+        if (!$reservation) {
+            return false;
         }
+
+        $reservationID = $reservation['ReservationID'];
+
+        // Step 2: Call stored procedure
+        $this->conn->execute_query(
+            "CALL CancelReservation(?)",
+            [$reservationID]
+        );
+
+        return true;
     }
 
     public function getGuestReservations($GuestID)

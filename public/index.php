@@ -49,17 +49,7 @@ $pages = new PagesController();
 $reservation = new ReservationController();
 $search = new SearchController();
 
-if (preg_match('#^/reservation/([A-Za-z0-9_-]+)$#', $uri, $matches)) {
-    $bookingToken = $matches[1];
 
-    if (!isset($_SESSION['logged_in_user_id'])) {
-        header('Location: /registration');
-        exit;
-    }
-
-    $reservation->show($bookingToken);
-    exit;
-}
 
 switch ($uri) {
     case '/':
@@ -186,11 +176,30 @@ switch ($uri) {
         $reservation->submit();
         break;
 
+    case '/reservation/cancel':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $pages->bookings();
+            exit;
+        }
+        $reservation->cancel();
+        break;
+
     case '/bookings':
         $pages->bookings();
         break;
 
     default:
+        if (preg_match('#^/reservation/([A-Za-z0-9_-]+)$#', $uri, $matches)) {
+            $bookingToken = $matches[1];
+
+            if (!isset($_SESSION['logged_in_user_id'])) {
+                header('Location: /registration');
+                exit;
+            }
+
+            $reservation->show($bookingToken);
+            exit;
+        }
         $pages->notFound();
         break;
 }
