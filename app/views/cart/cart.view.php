@@ -328,7 +328,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="self-start flex flex-col border-[0.3px] border-zinc-300 rounded w-2/5 p-8" id="cart-summary-right">
+                <div class="self-start flex flex-col border-[0.3px] border-zinc-300 rounded w-2/5 p-8"
+                    id="cart-summary-right">
                     <h2 class="font-semibold font-crimson text-2xl mb-4">Price Breakdown</h2>
                     <div class="text-sm font-roboto" id="price-breakdown-list"></div>
                     <div class="mt-4 font-semibold text-lg" id="cart-total">Total: ₱0.00</div>
@@ -679,8 +680,10 @@
                 $('#reservation-form').submit(); // only submit if valid
             });
             // ==================== RESERVATION SUBMIT ====================
+            // ==================== RESERVATION SUBMIT ====================
             $("#reservation-form").submit(function (e) {
                 e.preventDefault();
+
                 const phoneFull = $("#country_code").val() + $("#phone").val();
                 const guestData = {
                     fname: $("#fname").val(),
@@ -691,23 +694,37 @@
                 };
 
                 const selectedPayment = $('input[name="payment"]:checked').val();
-                if (!selectedPayment) { showToast("Please select a payment method.", "error"); return; }
+                if (!selectedPayment) {
+                    showToast("Please select a payment method.", "error");
+                    return;
+                }
 
                 $.ajax({
                     url: "/reservation-submit",
                     type: "POST",
                     contentType: "application/json",
-                    data: JSON.stringify({ guest: guestData, paymentMethod: selectedPayment, totalAmount: calculateCartSummary(carts).totalWithTax.toFixed(2) }),
+                    data: JSON.stringify({
+                        guest: guestData,
+                        paymentMethod: selectedPayment,
+                        totalAmount: calculateCartSummary(carts).totalWithTax.toFixed(2)
+                    }),
                     dataType: "json",
                     success: function (response) {
                         if (response.success) {
                             showToast(response.message, "success");
                             setTimeout(() => window.location.href = "/bookings", 1000);
-                        } else showToast(response.error || "Reservation failed.", "error");
+                        } else {
+                            // Show error toast
+                            showToast(response.error || "Reservation failed.", "error");
+
+                            // If cart items were removed, reload cart page after delay
+                            if (response.error === "Some rooms in your cart are no longer available.") {
+                                setTimeout(() => window.location.reload(), 2000); // reload after 2s
+                            }
+                        }
                     },
                     error: function (xhr) {
-                        showToast(xhr.responseText);
-                        showToast('An error occurred during reservation.');
+                        showToast(xhr.responseText || "An error occurred during reservation.", "error");
                     }
                 });
             });

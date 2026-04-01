@@ -270,99 +270,6 @@ END$$
 
 DELIMITER ;
 
-DELIMITER $$
-
--- CREATE PROCEDURE CheckoutCart(
---     IN pCartID INT,
---     IN pPaymentMethodID INT,
---     IN pNumAdults INT
--- )
--- BEGIN
---     DECLARE done INT DEFAULT 0;
---     DECLARE vroomID INT;
---     DECLARE checkIn DATE;
---     DECLARE checkOut DATE;
---     DECLARE vguestID INT;
---     DECLARE reservationID INT;
---     DECLARE isAvailable BOOLEAN;
---     DECLARE errMsg VARCHAR(255);
---     DECLARE token CHAR(36);
-
---     -- Cursor for rooms in cart
---     DECLARE cartCursor CURSOR FOR
---         SELECT RoomID, CheckInDate, CheckOutDate
---         FROM CartRooms
---         WHERE CartID = pCartID;
-
---     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
---     -- Start transaction
---     START TRANSACTION;
-
---     -- Get GuestID into local variable (not @guestID)
---     SELECT GuestID INTO vguestID
---     FROM ReservationCarts
---     WHERE CartID = pCartID
---     FOR UPDATE;
-
---     IF vguestID IS NULL THEN
---         ROLLBACK;
---         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid CartID: GuestID not found';
---     END IF;
-
---     OPEN cartCursor;
---     read_loop: LOOP
---         FETCH cartCursor INTO vroomID, checkIn, checkOut;
---         IF done THEN
---             LEAVE read_loop;
---         END IF;
-
---         -- Check availability
---         CALL CheckRoomAvailability(vroomID, checkIn, checkOut, isAvailable);
---         IF isAvailable = 0 THEN
---             SET errMsg = CONCAT('Room ', vroomID, ' no longer available');
---             ROLLBACK;
---             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = errMsg;
---         END IF;
---     END LOOP;
---     CLOSE cartCursor;
-
---     -- before the insert
---     SET token = UUID();
-
---     -- insert with token
---     INSERT INTO Reservations (GuestID, StatusID, CheckInDate, CheckOutDate, NumAdults, BookingToken)
---     SELECT vguestID, 1, MIN(CheckInDate), MAX(CheckOutDate), pNumAdults, token
---     FROM CartRooms
---     WHERE CartID = pCartID;
-
---     SET reservationID = LAST_INSERT_ID();
-
---     -- Add rooms to ReservationRooms
---     INSERT INTO ReservationRooms (ReservationID, RoomID)
---     SELECT reservationID, RoomID
---     FROM CartRooms
---     WHERE CartID = pCartID;
-
---     -- Create Payment
---     INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
---     SELECT reservationID, pPaymentMethodID, SUM(rt.BasePrice), 'pending'
---     FROM CartRooms cr
---     JOIN Rooms r ON cr.RoomID = r.RoomID
---     JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
---     WHERE cr.CartID = pCartID;
-
---     -- Remove cart
---     DELETE FROM CartRooms WHERE CartID = pCartID;
---     DELETE FROM ReservationCarts WHERE CartID = pCartID;
-
---     COMMIT;
-
---     SELECT reservationID AS ReservationID;
--- END$$
-
--- DELIMITER ;
-
 -- =========================
 -- RESERVATION
 -- =========================
@@ -409,12 +316,12 @@ CREATE PROCEDURE AddRoomToReservation(
     IN pRoomID INT,
     IN pCheckIn DATE,
     IN pCheckOut DATE,
-    IN pNumAdults INT
+    IN pNumAdults INT,
+    OUT pSuccess BOOLEAN,
+    OUT pMessage VARCHAR(255)
 )
 BEGIN
     DECLARE isAvailable BOOLEAN;
-
-    START TRANSACTION;
 
     -- Lock room row to prevent concurrent booking
     SELECT RoomID
@@ -426,15 +333,15 @@ BEGIN
     CALL CheckRoomAvailability(pRoomID, pCheckIn, pCheckOut, isAvailable);
 
     IF isAvailable = 0 THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Room already booked for these dates';
+        SET pSuccess = FALSE;
+        SET pMessage = 'Room already booked for these dates';
     ELSE
         INSERT INTO ReservationRooms
         (ReservationID, CheckInDate, CheckOutDate, NumAdults, RoomID)
         VALUES (pReservationID, pCheckIn, pCheckOut, pNumAdults, pRoomID);
 
-        COMMIT;
+        SET pSuccess = TRUE;
+        SET pMessage = 'Room added successfully';
     END IF;
 END$$
 
@@ -690,6 +597,97 @@ BEGIN
     WHERE ReservationID = pReservationID;
 
     COMMIT;
+
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE BookRoomsAtomic(
+    IN pGuestID INT,
+    IN pPaymentMethodID INT,
+    IN pAmount DECIMAL(10,2),
+    IN pCartJSON TEXT,
+    OUT pReservationID INT,
+    OUT pBookingToken CHAR(36),
+    OUT pSuccess BOOLEAN,
+    OUT pMessage VARCHAR(255)
+)
+BEGIN
+    DECLARE room JSON;
+    DECLARE i INT DEFAULT 0;
+    DECLARE n INT;
+    DECLARE isAvailable BOOLEAN;
+    DECLARE token CHAR(36);
+    DECLARE roomNumber VARCHAR(20);
+
+    START TRANSACTION;
+
+    -- Create reservation
+    SET token = UUID();
+    INSERT INTO Reservations (GuestID, StatusID, BookingToken)
+    VALUES (pGuestID, 1, token);
+
+    SET pReservationID = LAST_INSERT_ID();
+    SET pBookingToken = token;
+
+    -- Insert payment
+    INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
+    VALUES (pReservationID, pPaymentMethodID, pAmount, 'pending');
+
+    -- Get number of rooms
+    SET n = JSON_LENGTH(pCartJSON);
+
+    room_loop: WHILE i < n DO
+        SET room = JSON_EXTRACT(pCartJSON, CONCAT('$[', i, ']'));
+
+        -- Lock the room row
+        SELECT RoomID INTO @rid
+        FROM Rooms
+        WHERE RoomID = JSON_UNQUOTE(JSON_EXTRACT(room, '$.RoomID'))
+        FOR UPDATE;
+
+        -- Check availability
+        CALL CheckRoomAvailability(
+            JSON_UNQUOTE(JSON_EXTRACT(room, '$.RoomID')),
+            JSON_UNQUOTE(JSON_EXTRACT(room, '$.CheckInDate')),
+            JSON_UNQUOTE(JSON_EXTRACT(room, '$.CheckOutDate')),
+            @isAvailable
+        );
+
+        SET isAvailable = @isAvailable;
+
+        IF isAvailable = 0 THEN
+            SELECT RoomNumber INTO roomNumber
+            FROM Rooms
+            WHERE RoomID = CAST(JSON_UNQUOTE(JSON_EXTRACT(room, '$.RoomID')) AS UNSIGNED);
+
+            SET pSuccess = FALSE;
+            SET pMessage = CONCAT('Room ', roomNumber, ' is already booked');
+            ROLLBACK;
+            LEAVE room_loop;
+        ELSE
+            INSERT INTO ReservationRooms
+            (ReservationID, CheckInDate, CheckOutDate, NumAdults, RoomID)
+            VALUES (
+                pReservationID,
+                JSON_UNQUOTE(JSON_EXTRACT(room, '$.CheckInDate')),
+                JSON_UNQUOTE(JSON_EXTRACT(room, '$.CheckOutDate')),
+                JSON_UNQUOTE(JSON_EXTRACT(room, '$.NumAdults')),
+                JSON_UNQUOTE(JSON_EXTRACT(room, '$.RoomID'))
+            );
+        END IF;
+
+        SET i = i + 1;
+    END WHILE;
+
+    -- Commit if all rooms added successfully
+    IF i = n THEN
+        SET pSuccess = TRUE;
+        SET pMessage = 'Reservation successful';
+        COMMIT;
+    END IF;
 
 END$$
 

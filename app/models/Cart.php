@@ -107,7 +107,36 @@ class Cart
         }
     }
 
-    public function removeCartItems(int $cartRoomID) {
+    public function removeUnavailableCartItems()
+    {
+        $cartRows = $this->getCartRows();
+        $removedItems = [];
+
+        foreach ($cartRows as $row) {
+            $roomID = $row['RoomID'];
+            $checkIn = $row['CheckInDate'];
+            $checkOut = $row['CheckOutDate'];
+
+            // Call stored procedure
+            $this->conn->execute_query("CALL CheckRoomAvailability(?, ?, ?, @isAvailable)", [$roomID, $checkIn, $checkOut]);
+
+            // Fetch the output variable
+            $res = $this->conn->execute_query("SELECT @isAvailable AS isAvailable");
+            $availabilityRow = $res->fetch_assoc();
+            $res->free();
+
+            if (!$availabilityRow['isAvailable']) {
+                // Remove the cart item
+                $this->conn->execute_query("DELETE FROM CartRooms WHERE CartRoomID = ?", [$row['CartRoomID']]);
+                $removedItems[] = $row;
+            }
+        }
+
+        return $removedItems; // return removed items for frontend display
+    }
+
+    public function removeCartItems(int $cartRoomID)
+    {
         $CartID = $_SESSION['cart_id'] ?? null;
         if (!$CartID) {
             throw new Exception("No cart found for session.");
@@ -115,7 +144,8 @@ class Cart
 
         try {
             $this->conn->execute_query(
-                "DELETE FROM CartRooms"
+                "DELETE FROM CartRooms WHERE CartID =?",
+                [$CartID]
             );
             return true;
         } catch (Exception $e) {

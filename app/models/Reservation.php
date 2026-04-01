@@ -10,6 +10,43 @@ class Reservation
         $this->conn = $db;
     }
 
+    public function areRoomsAvailable($carts)
+    {
+        foreach ($carts as $cart) {
+            $roomID = $cart['RoomID'];
+            $checkIn = $cart['CheckInDate'];
+            $checkOut = $cart['CheckOutDate'];
+
+            // Clear all result sets
+            while ($this->conn->more_results()) {
+                $this->conn->next_result();
+            }
+
+            $this->conn->execute_query("CALL CheckRoomAvailability(?, ?, ?, @isAvailable)", [$roomID, $checkIn, $checkOut]);
+
+            // Fetch and free all result sets returned by the procedure
+            do {
+                if ($res = $this->conn->store_result()) {
+                    $res->free();
+                }
+            } while ($this->conn->more_results() && $this->conn->next_result());
+
+            $result = $this->conn->query("SELECT @isAvailable AS isAvailable;");
+            $row = $result->fetch_assoc();
+            $result->free();
+
+            if ((int) $row['isAvailable'] === 0) {
+                return [
+                    'success' => false,
+                    'roomID' => $roomID,
+                    'message' => 'Room ' . $roomID . ' is already booked for these dates'
+                ];
+            }
+        }
+
+        return ['success' => true];
+    }
+
     public function createReservation($guestID, $paymentMethod, $totalAmount)
     {
         try {
@@ -36,25 +73,57 @@ class Reservation
         }
     }
 
+    public function bookRoomsAtomic($guestID, $paymentMethodID, $totalAmount, $cartRows)
+    {
+        $cartJSON = json_encode($cartRows);
+
+        // Call procedure using execute_query
+        $this->conn->execute_query(
+            "CALL BookRoomsAtomic(?, ?, ?, ?, @ReservationID, @BookingToken, @Success, @Message)",
+            [$guestID, $paymentMethodID, $totalAmount, $cartJSON]
+        );
+
+        $result = $this->conn->query("SELECT @ReservationID AS ReservationID, @BookingToken AS BookingToken, @Success AS Success, @Message AS Message");
+        $row = $result->fetch_assoc();
+        $result->free();
+
+        if (!(bool) $row['Success']) {
+            if (empty($row['Mesage'])) {
+                throw new Exception('Room is already booked for these dates.');
+            } else {
+                throw new Exception($row['message']);
+            }
+        }
+
+        return [
+            'ReservationID' => $row['ReservationID'],
+            'BookingToken' => $row['BookingToken']
+        ];
+    }
+
     public function addRoomToReservation($reservationID, $roomID, $checkIn, $checkOut, $numAdults)
     {
-        try {
-            $result = $this->conn->execute_query(
-                "CALL AddRoomToReservation(?, ?, ?, ?, ?)",
-                [$reservationID, $roomID, $checkIn, $checkOut, $numAdults]
-            );
+        // Call procedure with OUT params
+        $this->conn->execute_query(
+            "CALL AddRoomToReservation(?, ?, ?, ?, ?, @success, @message)",
+            [$reservationID, $roomID, $checkIn, $checkOut, $numAdults]
+        );
 
-            if (!$result) {
-                throw new Exception("Failed to add room to reservation: " . $this->conn->error);
+        // Fetch OUT params
+        $result = $this->conn->query("SELECT @success AS success, @message AS message;");
+        if ($result) {
+            $row = $result->fetch_assoc();
+            $result->free();
+
+            if (!$row['success']) {
+                throw new Exception($row['message']);  // <-- THIS throws and triggers rollback
             }
 
             return true;
-
-        } catch (Exception $e) {
-            throw new Exception("Failed to add room to reservation: " . $e->getMessage());
+        } else {
+            throw new Exception('Failed to retrieve procedure output: ' . $this->conn->error);
         }
     }
-
     public function cancelReservation($reservationID = null, $bookingToken = null)
     {
         try {

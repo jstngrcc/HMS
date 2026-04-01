@@ -18,16 +18,10 @@ class ReservationController
 
         $input = json_decode(file_get_contents('php://input'), true);
 
+        // Extract guest info
         $guest = $input['guest'] ?? [];
         $paymentMethod = $input['paymentMethod'] ?? '';
-
-        $paymentMap = [
-            'Cash' => 1,
-            'Card' => 2,
-            'E-Wallet' => 3,
-            'Bank' => 4
-        ];
-
+        $paymentMap = ['Cash' => 1, 'Card' => 2, 'E-Wallet' => 3, 'Bank' => 4];
         $paymentMethodID = $paymentMap[$paymentMethod] ?? null;
 
         $email = trim($guest['email'] ?? '');
@@ -37,13 +31,10 @@ class ReservationController
         $phoneNo = trim($guest['phone'] ?? '');
         $phone = $country . $phoneNo;
         $birthDate = trim($guest['birthDate'] ?? '');
-        $totalAmount = trim($input['totalAmount']);
+        $totalAmount = trim($input['totalAmount'] ?? 0);
 
-        if (!$fname || !$lname || !$email || !$phone || !$birthDate || !$paymentMethod) {
-            echo json_encode([
-                "success" => false,
-                "error" => "Incomplete guest information."
-            ]);
+        if (!$fname || !$lname || !$email || !$phone || !$birthDate || !$paymentMethodID) {
+            echo json_encode(["success" => false, "error" => "Incomplete guest information."]);
             return;
         }
 
@@ -51,10 +42,7 @@ class ReservationController
         $sessionGuestID = $_SESSION['session_guest_id'] ?? null;
 
         if (!$cartID || !$sessionGuestID) {
-            echo json_encode([
-                "success" => false,
-                "error" => "No active cart found."
-            ]);
+            echo json_encode(["success" => false, "error" => "No active cart found."]);
             return;
         }
 
@@ -63,6 +51,7 @@ class ReservationController
         $reservationModel = new Reservation($GLOBALS['conn']);
 
         try {
+            // Determine guest ID
             if (!isset($_SESSION['logged_in_user_id'])) {
                 $guestIDObj = $userModel->createGuest($email, $fname, $lname, $phone, $birthDate);
                 $guestID = $guestIDObj->GuestID ?? $guestIDObj;
@@ -71,68 +60,54 @@ class ReservationController
                 $currentUserEmail = $userModel->getGuestEmailByID($currentUserGuestIDObj->GuestID);
 
                 if ($email !== $currentUserEmail) {
-                    // booking for someone else
-                    $guestIDObj = $userModel->createGuest($email, $fname, $lname, $phone, $birthDate);
-                    $guestID = $guestIDObj->GuestID ?? $guestIDObj;
+                    $newGuest = $userModel->createGuest($email, $fname, $lname, $phone, $birthDate);
+                    if (is_object($newGuest) && isset($newGuest->GuestID)) {
+                        $guestID = $newGuest->GuestID;
+                    } elseif (is_int($newGuest) || is_string($newGuest)) {
+                        $guestID = $newGuest;
+                    } else {
+                        throw new Exception("Failed to create guest. GuestID is null.");
+                    }
                 } else {
                     $guestID = $currentUserGuestIDObj->GuestID;
                 }
             }
-            $reservationData = $reservationModel->createReservation($guestID, $paymentMethodID, $totalAmount);
 
-            $reservationID = $reservationData['ReservationID'] ?? null;
-            $bookingToken = $reservationData['BookingToken'] ?? null;
-            if (isset($_SESSION['logged_in_user_id'])) {
-                // optionally link to user
-                $reservationModel->linkReservationToUser($reservationID, $_SESSION['logged_in_user_id']);
+            // Fetch cart rows
+            $cartRows = $cartModel->getCartRows();
+
+            if (empty($cartRows)) {
+                echo json_encode(["success" => false, "error" => "Cart is empty."]);
+                return;
             }
-            if (!$reservationID || !$bookingToken) {
-                echo json_encode([
-                    'success' => false,
-                    'error' => "Reservation could not be made."
-                ]);
-            } else {
-                $carts = $cartModel->getCartRows();
 
-                foreach ($carts as $cart) {
-                    $roomID = $cart['RoomID'];
-                    $checkIn = $cart['CheckInDate'];
-                    $checkOut = $cart['CheckOutDate'];
-                    $numAdults = $cart['NumAdults'];
+            // Book rooms atomically
+            $reservationData = $reservationModel->bookRoomsAtomic($guestID, $paymentMethodID, $totalAmount, $cartRows);
 
-                    $result = $reservationModel->addRoomToReservation(
-                        $reservationID,
-                        $roomID,
-                        $checkIn,
-                        $checkOut,
-                        $numAdults
-                    );
+            // Remove cart items
+            $cartModel->removeCartItems($cartID);
 
-                    if (!$result) {
-                        echo json_encode([
-                            "success" => false,
-                            "error" => "Failed to add room to reservation."
-                        ]);
-                        return;
-                    }
-                }
+            echo json_encode([
+                "success" => true,
+                "message" => "Reservation completed successfully.",
+                "BookingToken" => $reservationData['BookingToken']
+            ]);
 
-                $cartsClear = $cartModel->removeCartItems($cartID);
-
-                if (!$cartsClear) {
-                    echo json_encode(["success" => false, "error" => "Failed to clear cart."]);
-                    return;
-                }
-
-                echo json_encode([
-                    "success" => true,
-                    "message" => "Reservation completed successfully."
-                ]);
-            }
         } catch (Exception $e) {
+            if ($e->getMessage() === 'Room is already booked for these dates.') {
+                $cartModel = new Cart($GLOBALS['conn']);
+                $removedItems = $cartModel->removeUnavailableCartItems();
+
+                echo json_encode([
+                    "success" => false,
+                    "error" => "Some rooms in your cart are no longer available.",
+                    "removedItems" => $removedItems
+                ]);
+                return;
+            }
             echo json_encode([
                 "success" => false,
-                "error" => "Reservation failed: " . $e->getMessage()
+                "error" => $e->getMessage()
             ]);
         }
     }
