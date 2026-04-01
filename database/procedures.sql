@@ -213,14 +213,13 @@ BEGIN
     -- Availability
     AND (
         pCheckIn IS NULL OR pCheckOut IS NULL OR
-        r.RoomID NOT IN (
-            SELECT rr.RoomID
+        NOT EXISTS (
+            SELECT 1
             FROM ReservationRooms rr
             JOIN Reservations res ON rr.ReservationID = res.ReservationID
-            WHERE NOT (
-                rr.CheckOutDate <= pCheckIn OR
-                rr.CheckInDate >= pCheckOut
-            )
+            WHERE rr.RoomID = r.RoomID
+            AND rr.CheckInDate < pCheckOut
+            AND rr.CheckOutDate > pCheckIn
         )
     )
 

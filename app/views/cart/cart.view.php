@@ -57,7 +57,9 @@
                                                     class="font-roboto text-neutral-700 px-3 py-1 rounded mt-2 delete-cart-item flex items-center gap-2"
                                                     data-cartroomid="<?php echo $cart['CartRoomID']; ?>"> <span
                                                         class="inline-flex items-center"> <img src="/assets/icons/delete.svg"
-                                                            alt="Delete" class="w-4 h-4 cursor-pointer"> </span> <p class="cursor-pointer">Remove </p> </button> </div>
+                                                            alt="Delete" class="w-4 h-4 cursor-pointer"> </span>
+                                                    <p class="cursor-pointer">Remove </p>
+                                                </button> </div>
                                             <div class="flex-5 flex flex-col gap-3">
                                                 <h2 class="font-bold font-crimson text-xl">
                                                     <?php echo htmlspecialchars($cart['RoomTypeName']); ?> Room #
@@ -130,9 +132,9 @@
                             <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-600 rounded-lg"></div>
                             <div class="flex justify-end mt-3">
                                 <button id="to-guest"
-                                    class="flex items-center justify-center gap-2 text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3 w-40 align-middle">
+                                    class="flex items-center justify-center gap-2 text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3 w-40 align-middle group cursor-pointer hover:bg-[#3F321F] transition-colors">
                                     <p
-                                        class="transition-all duration-300 text-white hover:text-white hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)] cursor-pointer">
+                                        class="transition-all duration-300 text-white group-hover:text-white group-hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)] cursor-pointer">
                                         PROCEED
                                     </p>
                                 </button>
@@ -173,6 +175,7 @@
                                                 <label for="fname">First Name* </label>
                                                 <input type="text" id="fname" name="fname" required
                                                     class="border border-gray-300 p-2 rounded w-full text-black bg-white">
+                                                <!-- TODO: standardize the phone contact -->
                                                 <label for="phone">Phone Contact* </label>
                                                 <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" id="phone" name="phone"
                                                     placeholder="000-000-0000" required
@@ -229,8 +232,11 @@
                                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-600 rounded-lg"></div>
                                 <div class="flex justify-end mt-3">
                                     <button id="to-payment"
-                                        class="flex items-center justify-center gap-2 text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3 w-40 align-middle">
-                                        PROCEED
+                                        class="flex items-center justify-center gap-2 text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3 w-40 align-middle group cursor-pointer hover:bg-[#3F321F] transition-colors">
+                                        <p
+                                            class="transition-all duration-300 text-white group-hover:text-white group-hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)] cursor-pointer">
+                                            PROCEED
+                                        </p>
                                     </button>
                                 </div>
                             </div>
@@ -286,8 +292,11 @@
                                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-600 rounded-lg"></div>
                                 <div class="flex justify-end mt-3">
                                     <button id="to-checkout"
-                                        class="flex items-center justify-center gap-2 text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3 w-40 align-middle">
-                                        PROCEED
+                                        class="flex items-center justify-center gap-2 text-white font-roboto text-[16px] font-semibold leading-normal rounded-sm bg-[#C39C4D] p-3 w-40 align-middle group cursor-pointer hover:bg-[#3F321F] transition-colors">
+                                        <p
+                                            class="transition-all duration-300 text-white group-hover:text-white group-hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)] cursor-pointer">
+                                            PROCEED
+                                        </p>
                                     </button>
                                 </div>
                             </div>
@@ -319,8 +328,12 @@
                 <!-- Dynamic content will be injected here -->
             </div>
             <div class="flex justify-end mt-4">
-                <button id="modal-pay" class="bg-yellow-900 text-white px-4 py-2 rounded hover:bg-yellow-800">Confirm &
-                    Pay</button>
+                <button id="modal-pay"
+                    class="text-white font-roboto text-[14px] font-semibold leading-normal rounded-sm bg-[#714623] p-2.5 cursor-pointer hover:bg-[#654022] transition-colors duration-300 group">
+                    <p class="group-hover:text-white group-hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
+                        CONFIRM & PAY
+                    </p>
+                </button>
             </div>
         </div>
     </div>

@@ -122,7 +122,7 @@
           <div class="flex items-center">
             <button type="submit"
               class="text-white font-roboto text-[14px] font-semibold leading-normal rounded-sm bg-[#714623] p-2.5 cursor-pointer hover:bg-[#654022] transition-colors duration-300 group">
-              <p class="hover:text-white hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
+              <p class="group-hover:text-white group-hover:[text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
                 SEARCH ROOMS
               </p>
             </button>

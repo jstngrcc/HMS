@@ -16,20 +16,17 @@ if (checkout) defaultDates.push(parseYMD(checkout));
 
 flatpickr("#daterange", {
     mode: "range",
-    dateFormat: "d/m/Y",
+    dateFormat: "Y/m/d", // enforce YYYY/MM/DD
     allowInput: true,
     minDate: "today",
-    defaultDate: defaultDates.length ? defaultDates : null, // Correctly set Date objects
+    defaultDate: defaultDates.length ? defaultDates : null,
     onChange: function (selectedDates) {
         if (selectedDates.length === 2) {
             const [checkIn, checkOut] = selectedDates;
-            nights = getNights(checkIn, checkOut);
-            handleUpdate();
-        }
-    },
-    onClose: function (selectedDates, dateStr, instance) {
-        if (!dateStr) {
-            instance.set("minDate", "today");
+            // Update the input to use YYYY/MM/DD
+            document.querySelector("#daterange").value =
+                checkIn.toISOString().slice(0, 10).replace(/-/g, "/") + " to " +
+                checkOut.toISOString().slice(0, 10).replace(/-/g, "/");
         }
     }
 });

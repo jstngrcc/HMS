@@ -16,7 +16,7 @@ class SearchController
 
         // Handle POST: redirect to GET with query params
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $checkinStr = $_POST['checkin'] ?? null; // <-- use POST here
+            $checkinStr = $_POST['checkin'] ?? null;
             list($checkin, $checkout) = $this->parseCheckinCheckout($checkinStr);
 
             $filters = [
@@ -24,17 +24,25 @@ class SearchController
                 'checkout' => $checkout,
                 'adults' => !empty($_POST['adults']) ? (int) $_POST['adults'] : null,
                 'children' => !empty($_POST['children']) ? (int) $_POST['children'] : null,
-                'room' => $_POST['room'] ?? null,            // single/double
-                'room_type' => $_POST['room_type'] ?? null,      // string: Standard/Deluxe/Suite
+                'room' => $_POST['room'] ?? null,
+                'room_type' => $_POST['room_type'] ?? null,
             ];
 
-            // Redirect to GET with query parameters
-            $query = http_build_query($filters);
+            // Redirect to GET with query parameters in Y-m-d format
+            $query = http_build_query([
+                'checkin' => $checkin,
+                'checkout' => $checkout,
+                'adults' => $filters['adults'],
+                'children' => $filters['children'],
+                'room' => $filters['room'],
+                'room_type' => $filters['room_type']
+            ]);
+
             header("Location: /search?$query");
             exit;
         }
 
-        // Handle GET (from redirect or direct URL)
+        // Handle GET
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (isset($_GET['auto'])) {
                 $typeMap = [
@@ -50,9 +58,9 @@ class SearchController
                 $filters = [
                     'checkin' => $today->format('Y-m-d'),
                     'checkout' => $tomorrow->format('Y-m-d'),
-                    'adults' => '',
-                    'children' => '',
-                    'room' => '',
+                    'adults' => null,
+                    'children' => null,
+                    'room' => null,
                     'room_type' => $roomTypeId,
                 ];
 
@@ -60,20 +68,33 @@ class SearchController
                 $_GET['checkin'] = $today->format('d/m/Y') . ' to ' . $tomorrow->format('d/m/Y');
                 $_GET['room_type'] = $roomTypeId;
             } else {
+                // Check if GET params are in d/m/Y or Y-m-d
                 $checkinStr = $_GET['checkin'] ?? null;
-                list($checkin, $checkout) = $this->parseCheckinCheckout($checkinStr);
+                $checkoutStr = $_GET['checkout'] ?? null;
 
-                // GET
+                if ($checkinStr && strpos($checkinStr, ' to ') !== false) {
+                    // d/m/Y to d/m/Y format
+                    list($checkin, $checkout) = $this->parseCheckinCheckout($checkinStr);
+                } else {
+                    // Y-m-d format
+                    $checkin = $checkinStr ?: null;
+                    $checkout = $checkoutStr ?: null;
+                }
+
                 $filters = [
                     'checkin' => $checkin,
                     'checkout' => $checkout,
                     'adults' => !empty($_GET['adults']) ? (int) $_GET['adults'] : null,
                     'children' => !empty($_GET['children']) ? (int) $_GET['children'] : null,
                     'room' => $_GET['room'] ?? null,
-                    'room_type' => $_GET['room_type'] ?? null,        // string
+                    'room_type' => $_GET['room_type'] ?? null,
                 ];
             }
         }
+
+        // Debug: log to browser console
+        echo "<script>console.log('Checkin: " . ($filters['checkin'] ?? '') . "');</script>";
+        echo "<script>console.log('Checkout: " . ($filters['checkout'] ?? '') . "');</script>";
 
         // Fetch rooms
         $rooms = $roomModel->searchAvailable($filters);
