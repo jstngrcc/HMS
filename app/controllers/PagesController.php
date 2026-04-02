@@ -1,6 +1,7 @@
 <?php
 
 require_once '../app/models/Reservation.php';
+require_once '../app/models/Room.php';
 
 class PagesController
 {
@@ -52,6 +53,12 @@ class PagesController
                 $checkin = $dates[0];
                 $checkout = $dates[1];
             }
+        }
+
+        $roomNumber = $_GET['room'] ?? '';
+        if (!empty($roomNumber)) {
+            $roomModel = new Room($GLOBALS['conn']);
+            $rooms = $roomModel->getRoomInfoByRoomNumber($roomNumber);
         }
 
         require_once '../app/views/rooms/standard.view.php';

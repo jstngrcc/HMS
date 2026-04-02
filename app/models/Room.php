@@ -28,6 +28,22 @@ class Room
         return (float) $row['price'];
     }
 
+    public function getRoomInfoByRoomNumber($roomNumber) {
+        $result = $this->conn->execute_query(
+            'SELECT 
+    rt.RoomTypeName,
+    rt.BasePrice,
+    rt.MaxOccupancy
+FROM Rooms r
+JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
+WHERE r.RoomNumber = ?;',
+            [$roomNumber]
+        );
+
+        $roomInfo = $result->fetch_assoc();
+        return $roomInfo ?: null;
+    }
+
     function calculateTotalAmount($roomTypeName, $basePrice, $checkin, $checkout, $numAdults = 1)
     {
         // 1. Calculate number of nights
@@ -77,7 +93,6 @@ class Room
         // Call stored procedure
         $this->conn->execute_query("CALL GetRoomName(?, @name)", [$roomID]);
 
-        // 🔴 VERY IMPORTANT: clear remaining result sets
         while ($this->conn->more_results() && $this->conn->next_result()) {
             $this->conn->use_result();
         }
