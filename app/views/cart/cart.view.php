@@ -446,6 +446,7 @@
                 return { roomCost, nightDiscount, guestCharge, guestDiscount, subtotal, total };
             }
 
+            // ==================== CART TOTAL CALCULATION ====================
             function calculateCartSummary(carts) {
                 let totalRoomCost = 0, totalNightDiscount = 0, totalGuestCharge = 0, totalGuestDiscount = 0, subtotalRooms = 0;
 
@@ -468,13 +469,17 @@
 
                 const totalWithTax = subtotalRooms * 1.12;
 
+                // Add total before discount for payment
+                const totalBeforeDiscount = subtotalRooms + totalGuestDiscount;
+
                 return {
                     totalRoomCost,
                     totalNightDiscount,
                     totalGuestCharge,
                     totalGuestDiscount,
                     subtotalRooms,
-                    totalWithTax
+                    totalWithTax,
+                    totalBeforeDiscount // NEW: send amount before discount
                 };
             }
 
@@ -697,13 +702,27 @@
             }
 
             // Open modal
+            // ==================== OPEN PAYMENT MODAL ====================
             $('#to-checkout').click(function () {
                 const selectedPayment = $('input[name="payment"]:checked').val();
-                if (!selectedPayment) { showToast('Please select a payment method.'); return; }
+                if (!selectedPayment) {
+                    showToast('Please select a payment method.');
+                    return;
+                }
 
-                const totalAmount = calculateCartSummary(carts).totalWithTax.toFixed(2);
+                const summary = calculateCartSummary(carts);
+
+                const totalAmount = summary.totalBeforeDiscount.toFixed(2); // BEFORE discount
+                const discountAmount = summary.totalGuestDiscount.toFixed(2); // discount value
+
                 $('#payment-modal-title').text(selectedPayment + ' Payment');
                 $('#payment-modal-content').html(getPaymentContent(selectedPayment, totalAmount));
+
+                // Optionally store both values in modal data
+                $('#payment-modal-content').data({
+                    totalAmount,
+                    discountAmount
+                });
 
                 // Show modal
                 $('#payment-modal').removeClass('opacity-0 pointer-events-none').addClass('opacity-100');
@@ -789,6 +808,8 @@
 
                 showToast("Please wait...");
 
+                const summary = calculateCartSummary(carts);
+
                 $.ajax({
                     url: "/reservation-submit",
                     type: "POST",
@@ -796,7 +817,9 @@
                     data: JSON.stringify({
                         guest: guestData,
                         paymentMethod: selectedPayment,
-                        totalAmount: calculateCartSummary(carts).totalWithTax.toFixed(2),
+                        totalAmount: summary.totalWithTax.toFixed(2),        // final total (optional)
+                        totalBeforeDiscount: summary.totalBeforeDiscount.toFixed(2), // new field
+                        discountAmount: summary.totalGuestDiscount.toFixed(2),       // new field
                         discountCardNumber: applyDiscount ? discountCardNumber : null,
                         discountType: applyDiscount ? discountType : null
                     }),

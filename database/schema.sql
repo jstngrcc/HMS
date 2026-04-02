@@ -190,20 +190,31 @@ CREATE TABLE IF NOT EXISTS PaymentMethods (
 -- =========================
 -- PAYMENTS
 -- =========================
+CREATE TABLE IF NOT EXISTS ReservationDiscounts (
+    ReservationDiscountID INT AUTO_INCREMENT PRIMARY KEY,
+    ReservationID INT NOT NULL,
+    DiscountType VARCHAR(50) NOT NULL,
+    DiscountValue DECIMAL(10,2) NOT NULL,
+    CardNumber VARCHAR(50),
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (ReservationID) REFERENCES Reservations(ReservationID) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS Payments (
     PaymentID INT AUTO_INCREMENT PRIMARY KEY,
     ReservationID INT NOT NULL,
     MethodID INT NOT NULL,
-    DiscountAmount DECIMAL(10,2) DEFAULT 0.00,
-    Amount DECIMAL(10,2) NOT NULL,
+    TotalBeforeDiscount DECIMAL(10,2) NOT NULL DEFAULT 0.00, -- Original total
+    DiscountAmount DECIMAL(10,2) NOT NULL DEFAULT 0.00,       -- Discount applied
+    Amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,               -- Total charged
     PaymentStatus ENUM('pending','completed','failed','refunded') DEFAULT 'pending',
     PaymentDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     TransactionReference VARCHAR(255),
 
-    FOREIGN KEY (ReservationID) REFERENCES Reservations(ReservationID),
+    FOREIGN KEY (ReservationID) REFERENCES Reservations(ReservationID) ON DELETE CASCADE,
     FOREIGN KEY (MethodID) REFERENCES PaymentMethods(MethodID)
 );
-
 -- =========================
 -- CARTS
 -- =========================

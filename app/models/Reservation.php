@@ -75,14 +75,20 @@ class Reservation
         }
     }
 
-    public function bookRoomsAtomic($guestID, $paymentMethodID, $totalAmount, $cartRows, $discountType = null, $discountValue = 0, $discountCardNumber = null)
-    {
+    public function bookRoomsAtomic(
+        $guestID,
+        $paymentMethodID,
+        $totalBeforeDiscount,
+        $cartRows,
+        $discountType = null,
+        $discountAmount = 0,
+        $discountCardNumber = null
+    ) {
         $cartJSON = json_encode($cartRows);
 
-        // Call procedure using execute_query
         $this->conn->execute_query(
             "CALL BookRoomsAtomic(?, ?, ?, ?, ?, ?, ?, @ReservationID, @BookingToken, @Success, @Message)",
-            [$guestID, $paymentMethodID, $totalAmount, $cartJSON, $discountType, $discountValue, $discountCardNumber]
+            [$guestID, $paymentMethodID, $totalBeforeDiscount, $cartJSON, $discountType, $discountAmount, $discountCardNumber]
         );
 
         $result = $this->conn->query("SELECT @ReservationID AS ReservationID, @BookingToken AS BookingToken, @Success AS Success, @Message AS Message");

@@ -18,6 +18,9 @@ class ReservationController
 
         $input = json_decode(file_get_contents('php://input'), true);
 
+        $totalBeforeDiscount = floatval($input['totalBeforeDiscount'] ?? 0); // new
+        $discountAmount = floatval($input['discountAmount'] ?? 0);           // new
+
         // Extract guest info
         $guest = $input['guest'] ?? [];
         $paymentMethod = $input['paymentMethod'] ?? '';
@@ -86,15 +89,14 @@ class ReservationController
                 return;
             }
 
-            // Book rooms atomically and include discount info
             $reservationData = $reservationModel->bookRoomsAtomic(
                 $guestID,
                 $paymentMethodID,
-                $totalAmount,
+                $totalBeforeDiscount,   // total before discount
                 $cartRows,
-                $discountType,      // new
-                $discountValue,     // new
-                $discountCardNumber // new
+                $discountType,
+                $discountAmount,        // now passing discount amount
+                $discountCardNumber
             );
 
             // Link reservation to logged-in user
@@ -114,7 +116,8 @@ class ReservationController
 
             echo json_encode([
                 "success" => true,
-                "message" => "Reservation completed successfully.",
+                // "message" => "Reservation completed successfully.",
+                "message" => "$paymentMethodID $totalBeforeDiscount $discountType $discountAmount $discountCardNumber",
                 "BookingToken" => $reservationData['BookingToken']
             ]);
 

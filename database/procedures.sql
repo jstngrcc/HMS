@@ -595,10 +595,10 @@ DELIMITER $$
 CREATE PROCEDURE BookRoomsAtomic(
     IN pGuestID INT,
     IN pPaymentMethodID INT,
-    IN pAmount DECIMAL(10,2),
+    IN pTotalBeforeDiscount DECIMAL(10,2),
     IN pCartJSON TEXT,
     IN pDiscountType VARCHAR(50),
-    IN pDiscountValue DECIMAL(10,2),
+    IN pDiscountAmount DECIMAL(10,2),
     IN pDiscountCardNumber VARCHAR(50),
     OUT pReservationID INT,
     OUT pBookingToken CHAR(36),
@@ -624,14 +624,27 @@ BEGIN
     SET pBookingToken = token;
 
     -- Insert payment
-    INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
-    VALUES (pReservationID, pPaymentMethodID, pAmount, 'pending');
+    INSERT INTO Payments (
+        ReservationID,
+        MethodID,
+        TotalBeforeDiscount,
+        DiscountAmount,
+        Amount,
+        PaymentStatus
+    ) VALUES (
+        pReservationID,
+        pPaymentMethodID,
+        pTotalBeforeDiscount,
+        pDiscountAmount,
+        pTotalBeforeDiscount - IFNULL(pDiscountAmount,0),
+        'pending'
+    );
 
     -- Insert discount info if any
-    IF pDiscountType IS NOT NULL AND pDiscountValue > 0 THEN
+    IF pDiscountType IS NOT NULL AND pDiscountAmount > 0 THEN
         INSERT INTO ReservationDiscounts
         (ReservationID, DiscountType, DiscountValue, CardNumber)
-        VALUES (pReservationID, pDiscountType, pDiscountValue, pDiscountCardNumber);
+        VALUES (pReservationID, pDiscountType, pDiscountAmount, pDiscountCardNumber);
     END IF;
 
     -- Get number of rooms
