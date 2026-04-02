@@ -313,6 +313,26 @@
                                             class="accent-[#714623] ml-auto">
                                     </label>
                                 </div>
+                                <!-- PWD/Senior Card Option -->
+                                <div class="my-4 w-1/3">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="apply-discount" class="accent-[#714623] cursor-pointer">
+                                        <span class="text-black text-xs font-normal font-roboto">Apply PWD / Senior
+                                            Discount</span>
+                                    </label>
+
+                                    <!-- Dropdown for discount type -->
+                                    <select id="discount-type-dropdown"
+                                        class="border border-gray-300 p-2 rounded w-full mt-2 text-black bg-white" disabled>
+                                        <option value="" selected>Select Discount Type</option>
+                                        <option value="Senior">Senior</option>
+                                        <option value="PWD">PWD</option>
+                                    </select>
+
+                                    <!-- Card number input -->
+                                    <input type="text" id="discount-card-number" placeholder="Enter PWD/Senior Card Number"
+                                        class="border border-gray-300 p-2 rounded w-full mt-2 text-black bg-white" disabled>
+                                </div>
 
                                 <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-600 rounded-lg"></div>
                                 <div class="flex justify-end mt-3">
@@ -367,6 +387,10 @@
 
     <?php require_once __DIR__ . '/../components/footer.view.php'; ?>
     <script>
+        const discountRates = {
+            'Senior': 20, // 20% for senior
+            'PWD': 15     // 15% for PWD
+        };
         $(document).ready(function () {
 
             // ==================== SECTION ACCORDION ====================
@@ -401,30 +425,29 @@
                 return Math.max(1, diffMs / (1000 * 60 * 60 * 24));
             }
 
-            function calculateRoomTotal({ basePrice, nights, numGuests, roomType }) {
+            function calculateRoomTotal({ basePrice, nights, numGuests, roomType, discountType }) {
                 let roomCost = basePrice * nights;
                 let nightDiscount = nights > 2 ? roomCost * 0.15 : 0;
 
                 let extraGuests = 0;
-                if (roomType === 'Standard Single') extraGuests = Math.max(0, numGuests - 1);
-                else if (roomType === 'Standard Double') extraGuests = Math.max(0, numGuests - 2);
-
-                if (roomType === 'Deluxe Single') extraGuests = Math.max(0, numGuests - 1);
-                else if (roomType === 'Deluxe Double') extraGuests = Math.max(0, numGuests - 2);
-
-                if (roomType === 'Suite Single') extraGuests = Math.max(0, numGuests - 1);
-                else if (roomType === 'Suite Double') extraGuests = Math.max(0, numGuests - 2);
+                if (roomType.includes('Single')) extraGuests = Math.max(0, numGuests - 1);
+                if (roomType.includes('Double')) extraGuests = Math.max(0, numGuests - 2);
 
                 let guestCharge = basePrice * 0.10 * extraGuests * nights;
 
-                const subtotal = roomCost - nightDiscount + guestCharge;
-                const total = subtotal * 1.12; // 12% tax included
+                let guestDiscount = 0;
+                if (discountType && discountRates[discountType]) {
+                    guestDiscount = roomCost * (discountRates[discountType] / 100);
+                }
 
-                return { roomCost, nightDiscount, guestCharge, subtotal, total };
+                const subtotal = roomCost - nightDiscount - guestDiscount + guestCharge;
+                const total = subtotal * 1.12; // tax included
+
+                return { roomCost, nightDiscount, guestCharge, guestDiscount, subtotal, total };
             }
 
             function calculateCartSummary(carts) {
-                let totalRoomCost = 0, totalNightDiscount = 0, totalGuestCharge = 0, subtotalRooms = 0;
+                let totalRoomCost = 0, totalNightDiscount = 0, totalGuestCharge = 0, totalGuestDiscount = 0, subtotalRooms = 0;
 
                 carts.forEach(cart => {
                     const nights = getNights(cart.CheckInDate, cart.CheckOutDate);
@@ -432,12 +455,14 @@
                         basePrice: cart.BasePrice,
                         nights: nights,
                         numGuests: cart.NumAdults,
-                        roomType: cart.RoomTypeName
+                        roomType: cart.RoomTypeName,
+                        discountType: cart.discountType || null
                     });
 
                     totalRoomCost += roomData.roomCost;
                     totalNightDiscount += roomData.nightDiscount;
                     totalGuestCharge += roomData.guestCharge;
+                    totalGuestDiscount += roomData.guestDiscount;
                     subtotalRooms += roomData.subtotal;
                 });
 
@@ -447,6 +472,7 @@
                     totalRoomCost,
                     totalNightDiscount,
                     totalGuestCharge,
+                    totalGuestDiscount,
                     subtotalRooms,
                     totalWithTax
                 };
@@ -466,6 +492,11 @@
                     <div class="flex justify-between">
                         <div class="  text-black text-base font-normal font-roboto">Night Discount</div>
                         <div class="  text-black text-base font-normal font-roboto">-₱ ${summary.totalNightDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <div class="text-black text-base font-normal font-roboto">Guest Discount</div>
+                        <div class="text-black text-base font-normal font-roboto">-₱ ${summary.totalGuestDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                     </div>
 
                     <div class="flex justify-between">
@@ -534,6 +565,28 @@
                     },
                     error: function () { showToast('An error occurred while removing the item.'); }
                 });
+            });
+
+            // ==================== SENIOR PWD CARD ====================
+            // Enable/disable dropdown and input
+            $('#apply-discount').change(function () {
+                const checked = this.checked;
+                $('#discount-type-dropdown').prop('disabled', !checked).val('');
+                $('#discount-card-number').prop('disabled', !checked).val('');
+
+                if (!checked) {
+                    carts.forEach(c => delete c.discountType);
+                    renderPriceBreakdown(carts);
+                }
+            });
+
+            // Assign discount type to cart when dropdown changes
+            $('#discount-type-dropdown').change(function () {
+                const selectedType = $(this).val();
+                if (selectedType) {
+                    carts.forEach(c => c.discountType = selectedType);
+                    renderPriceBreakdown(carts);
+                }
             });
 
             // ==================== USE ACCOUNT DETAILS ====================
@@ -660,12 +713,21 @@
                 $('#payment-modal').removeClass('opacity-100').addClass('opacity-0 pointer-events-none');
             });
             $('#modal-pay').click(function () {
+                const applyDiscount = $('#apply-discount').is(':checked');
+                const discountCardNumber = $('#discount-card-number').val().trim();
+
+                if (applyDiscount && discountCardNumber === '') {
+                    showToast('Please enter your PWD or Senior card number to apply discount.', 'error');
+                    $('#discount-card-number').focus();
+                    return; // do not hide the modal
+                }
+
                 const inputs = $('#payment-modal-content').find('input');
                 let valid = true;
 
                 inputs.each(function () {
                     if (!this.checkValidity()) {
-                        $(this).addClass('border-red-500'); // optional visual cue
+                        $(this).addClass('border-red-500');
                         valid = false;
                     } else {
                         $(this).removeClass('border-red-500');
@@ -677,13 +739,39 @@
                     return;
                 }
 
-                $('#reservation-form').submit(); // only submit if valid
+                // Submit form
+                $('#reservation-form').submit();
+
+                // Fade out modal
+                $('#payment-modal').fadeTo(300, 0, function () {
+                    $(this).addClass('pointer-events-none').hide();
+                    $(this).css('opacity', '');
+                });
             });
             // ==================== RESERVATION SUBMIT ====================
-            // ==================== RESERVATION SUBMIT ====================
+            // Form submission validation
             $("#reservation-form").submit(function (e) {
                 e.preventDefault();
 
+                const applyDiscount = $('#apply-discount').is(':checked');
+                const discountType = $('#discount-type-dropdown').val();
+                const discountCardNumber = $('#discount-card-number').val().trim();
+
+                if (applyDiscount) {
+                    if (!discountType) {
+                        showToast("Please select the discount type (Senior/PWD).", "error");
+                        $('#discount-type-dropdown').focus();
+                        return;
+                    }
+
+                    if (discountCardNumber === '') {
+                        showToast("Please enter your PWD or Senior card number.", "error");
+                        $('#discount-card-number').focus();
+                        return;
+                    }
+                }
+
+                // proceed with payment submission
                 const phoneFull = $("#country_code").val() + $("#phone").val();
                 const guestData = {
                     fname: $("#fname").val(),
@@ -699,7 +787,7 @@
                     return;
                 }
 
-                showToast("Please wait...", "info");
+                showToast("Please wait...");
 
                 $.ajax({
                     url: "/reservation-submit",
@@ -708,7 +796,9 @@
                     data: JSON.stringify({
                         guest: guestData,
                         paymentMethod: selectedPayment,
-                        totalAmount: calculateCartSummary(carts).totalWithTax.toFixed(2)
+                        totalAmount: calculateCartSummary(carts).totalWithTax.toFixed(2),
+                        discountCardNumber: applyDiscount ? discountCardNumber : null,
+                        discountType: applyDiscount ? discountType : null
                     }),
                     dataType: "json",
                     success: function (response) {
@@ -716,17 +806,8 @@
                             showToast(response.message, "success");
                             setTimeout(() => window.location.href = "/bookings", 1000);
                         } else {
-                            // Show error toast
-                            showToast(response.error || "Reservation failed.", "error");
-
-                            // If cart items were removed, reload cart page after delay
-                            if (response.error === "Some rooms in your cart are no longer available.") {
-                                setTimeout(() => window.location.reload(), 2000); // reload after 2s
-                            }
+                            showToast(response.error || "Failed to reserve.", "error");
                         }
-                    },
-                    error: function (xhr) {
-                        showToast(xhr.responseText || "An error occurred during reservation.", "error");
                     }
                 });
             });

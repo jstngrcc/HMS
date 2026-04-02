@@ -69,6 +69,23 @@ CREATE TABLE IF NOT EXISTS PasswordResets (
 
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
+
+CREATE TABLE IF NOT EXISTS DiscountTypes (
+    DiscountTypeID INT AUTO_INCREMENT PRIMARY KEY,
+    DiscountName VARCHAR(50) NOT NULL UNIQUE,
+    DiscountPercentage DECIMAL(5,2) NOT NULL CHECK (DiscountPercentage >= 0 AND DiscountPercentage <= 100)
+);
+
+CREATE TABLE IF NOT EXISTS GuestDiscounts (
+    GuestDiscountID INT AUTO_INCREMENT PRIMARY KEY,
+    GuestID INT NOT NULL,
+    DiscountTypeID INT NOT NULL,
+    CardNumber VARCHAR(50) NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (GuestID) REFERENCES Guests(GuestID),
+    FOREIGN KEY (DiscountTypeID) REFERENCES DiscountTypes(DiscountTypeID)
+);
 -- =========================
 -- BED TYPES
 -- =========================
@@ -177,6 +194,7 @@ CREATE TABLE IF NOT EXISTS Payments (
     PaymentID INT AUTO_INCREMENT PRIMARY KEY,
     ReservationID INT NOT NULL,
     MethodID INT NOT NULL,
+    DiscountAmount DECIMAL(10,2) DEFAULT 0.00,
     Amount DECIMAL(10,2) NOT NULL,
     PaymentStatus ENUM('pending','completed','failed','refunded') DEFAULT 'pending',
     PaymentDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

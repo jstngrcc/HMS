@@ -17,6 +17,10 @@ INSERT INTO ReservationStatus (StatusName) VALUES
 ('checked_out'),
 ('cancelled');
 
+INSERT INTO DiscountTypes (DiscountTypeID, DiscountName, DiscountPercentage) VALUES 
+(1,'Senior',20),
+(2,'PWD',15);
+
 INSERT INTO PaymentMethods (MethodName) VALUES
 ('cash'),
 ('card'),
