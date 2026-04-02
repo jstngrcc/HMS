@@ -219,23 +219,25 @@ class Reservation
 
             $result = $this->conn->execute_query(
                 "SELECT
-                r.ReservationID,
-                r.BookingToken,
-                rs.StatusName AS ReservationStatus,
-                pm.MethodName AS PaymentMethod,
-                p.Amount,
-                p.PaymentDate,
-                r.CreatedAt,
-                g.FirstName AS GuestFirstName,
-                g.LastName AS GuestLastName,
-                g.Email AS GuestEmail
-            FROM Reservations r
-            INNER JOIN Guests g ON r.GuestID = g.GuestID
-            INNER JOIN ReservationStatus rs ON r.StatusID = rs.StatusID
-            LEFT JOIN Payments p ON r.ReservationID = p.ReservationID
-            LEFT JOIN PaymentMethods pm ON p.MethodID = pm.MethodID
-            INNER JOIN UserReservations ur ON r.ReservationID = ur.ReservationID
-            WHERE ur.UserID = ?",
+        r.ReservationID,
+        r.BookingToken,
+        rs.StatusName AS ReservationStatus,
+        pm.MethodName AS PaymentMethod,
+        p.TotalBeforeDiscount,
+        p.DiscountAmount,
+        p.Amount,
+        p.PaymentDate,
+        r.CreatedAt,
+        g.FirstName AS GuestFirstName,
+        g.LastName AS GuestLastName,
+        g.Email AS GuestEmail
+    FROM Reservations r
+    INNER JOIN Guests g ON r.GuestID = g.GuestID
+    INNER JOIN ReservationStatus rs ON r.StatusID = rs.StatusID
+    LEFT JOIN Payments p ON r.ReservationID = p.ReservationID
+    LEFT JOIN PaymentMethods pm ON p.MethodID = pm.MethodID
+    INNER JOIN UserReservations ur ON r.ReservationID = ur.ReservationID
+    WHERE ur.UserID = ?",
                 [$userID]
             );
 
@@ -253,7 +255,6 @@ class Reservation
             throw new Exception("Error retrieving reservations: " . $e->getMessage());
         }
     }
-
     public function getReservationsForUser($userID)
     {
         $result = $this->conn->execute_query(
@@ -367,17 +368,25 @@ class Reservation
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    public function getReservationPayment($reservationID)
-    {
-        $result = $this->conn->execute_query(
-            "SELECT p.PaymentID, pm.MethodName AS PaymentMethod, p.PaymentStatus
+public function getReservationPayment($reservationID)
+{
+    $result = $this->conn->execute_query(
+        "SELECT 
+            p.PaymentID, 
+            pm.MethodName AS PaymentMethod, 
+            p.PaymentStatus,
+            p.TotalBeforeDiscount,
+            p.DiscountAmount,
+            p.Amount
          FROM Payments p
          JOIN PaymentMethods pm ON pm.MethodID = p.MethodID
-         WHERE p.ReservationID = ? LIMIT 1",
-            [$reservationID]
-        );
-        return $result->fetch_assoc();
-    }
+         WHERE p.ReservationID = ? 
+         LIMIT 1",
+        [$reservationID]
+    );
+
+    return $result ? $result->fetch_assoc() : null;
+}
 
     public function sendReservationConfirmation($guestEmail, $bookingToken)
     {

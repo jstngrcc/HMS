@@ -18,35 +18,57 @@ $statusMap = [
 $subtotalRooms = 0;
 $additionalGuestCharge = 0;
 $totalNights = 0;
+$guestDiscount = 0;
+$nightDiscount = 0;
 
-foreach ($rooms as $room) {
-    $checkIn = new DateTime($room['CheckInDate']);
-    $checkOut = new DateTime($room['CheckOutDate']);
-    $nights = $checkOut->diff($checkIn)->days;
+// If $payment exists and has relevant fields from SQL, use it
+if (!empty($payment) && isset($payment['TotalBeforeDiscount'], $payment['DiscountAmount'], $payment['Amount'])) {
+    $subtotalRooms = $payment['TotalBeforeDiscount'] ?? 0; // 1800
+    $guestDiscount = $payment['DiscountAmount'] ?? 0;      // 360
+    $additionalGuestCharge = $payment['AdditionalGuestCharge'] ?? 0; // default 0
+    $nightDiscount = $payment['NightDiscount'] ?? 0; // default 0
 
-    $totalNights += $nights;
+    // Subtotal before tax (sum of room subtotal minus discounts + extra charges)
+    $subtotalBeforeTax = $subtotalRooms - $guestDiscount - $nightDiscount + $additionalGuestCharge;
 
-    $subtotalRooms += $room['BasePrice'];
+    // Compute tax as 12% of subtotal before tax
+    $tax = $subtotalBeforeTax * 0.12;
 
-    // Determine base occupancy
-    $baseOccupancy = stripos($room['RoomType'], 'Single') !== false ? 1 : 2;
+    // Total = subtotal before tax + tax
+    $total = $subtotalBeforeTax + $tax;
+} else {
+    // Fallback: calculate from $rooms array
+    foreach ($rooms as $room) {
+        $checkIn = new DateTime($room['CheckInDate']);
+        $checkOut = new DateTime($room['CheckOutDate']);
+        $nights = $checkOut->diff($checkIn)->days;
 
-    // Extra guest charge: 10% per extra guest
-    $extraGuests = max(0, $room['NumGuests'] - $baseOccupancy);
-    $additionalGuestCharge += $room['BasePrice'] * 0.10 * $extraGuests;
+        $totalNights += $nights;
+        $subtotalRooms += $room['BasePrice'];
+
+        // Determine base occupancy
+        $baseOccupancy = stripos($room['RoomType'], 'Single') !== false ? 1 : 2;
+
+        // Extra guest charge: 10% per extra guest
+        $extraGuests = max(0, $room['NumGuests'] - $baseOccupancy);
+        $additionalGuestCharge += $room['BasePrice'] * 0.10 * $extraGuests;
+
+        // Guest discount: 20% per extra guest (or your configured value)
+        $guestDiscount += $room['BasePrice'] * 0.20 * $extraGuests;
+    }
+
+    // Night discount: 15% off if stay > 3 nights
+    $nightDiscount = $totalNights > 3 ? $subtotalRooms * 0.15 : 0;
+
+    // Subtotal before tax
+    $subtotalBeforeTax = $subtotalRooms - $nightDiscount - $guestDiscount + $additionalGuestCharge;
+
+    // Tax 12%
+    $tax = $subtotalBeforeTax * 0.12;
+
+    // Total
+    $total = $subtotalBeforeTax + $tax;
 }
-
-// Night discount: 15% off if stay > 3 nights
-$nightDiscount = $totalNights > 3 ? ($subtotalRooms + $additionalGuestCharge) * 0.15 : 0;
-
-// Subtotal before tax
-$subtotalBeforeTax = $subtotalRooms + $additionalGuestCharge - $nightDiscount;
-
-// Tax 12%
-$tax = $subtotalBeforeTax * 0.12;
-
-// Total
-$total = $subtotalBeforeTax + $tax;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -254,18 +276,20 @@ $total = $subtotalBeforeTax + $tax;
                         <h2 class="font-semibold font-crimson text-xl px-8 py-4">Payment Summary</h2>
                         <div class="h-0.5 w-full bg-linear-to-r from-yellow-100 to-yellow-600 rounded-lg"></div>
                         <div class="text-sm font-roboto px-8 py-4">
-                            <div class="flex justify-between"><span>Rooms
-                                    Cost:</span><span>₱<?= number_format($subtotalRooms, 2) ?></span></div>
-                            <div class="flex justify-between"><span>Additional Guest
-                                    Charge:</span><span>₱<?= number_format($additionalGuestCharge, 2) ?></span></div>
-                            <div class="flex justify-between"><span>Night
-                                    Discount:</span><span>₱<?= number_format($nightDiscount, 2) ?></span></div>
-                            <div class="flex justify-between"><span>Subtotal (before
-                                    tax):</span><span>₱<?= number_format($subtotalBeforeTax, 2) ?></span></div>
-                            <div class="flex justify-between"><span>Tax (12%
-                                    included):</span><span>₱<?= number_format($tax, 2) ?></span></div>
+                            <div class="flex justify-between"><span>Subtotal Rooms Cost:</span><span>₱
+                                    <?= number_format($subtotalRooms, 2) ?></span></div>
+                            <div class="flex justify-between"><span>Night Discount:</span><span>-₱
+                                    <?= number_format($nightDiscount, 2) ?></span></div>
+                            <div class="flex justify-between"><span>Guest Discount:</span><span>-₱
+                                    <?= number_format($guestDiscount, 2) ?></span></div>
+                            <div class="flex justify-between"><span>Additional Guest Charge:</span><span>₱
+                                    <?= number_format($additionalGuestCharge, 2) ?></span></div>
+                            <div class="flex justify-between"><span>Subtotal (before tax):</span><span>₱
+                                    <?= number_format($subtotalBeforeTax, 2) ?></span></div>
+                            <div class="flex justify-between"><span>Tax (12% included in total):</span><span>₱
+                                    <?= number_format($tax, 2) ?></span></div>
                             <div class="flex justify-between mt-2 font-semibold">
-                                <span>Total:</span><span>₱<?= number_format($total, 2) ?></span>
+                                <span>Total (12% tax included):</span><span>₱ <?= number_format($total, 2) ?></span>
                             </div>
                         </div>
                     </div>
