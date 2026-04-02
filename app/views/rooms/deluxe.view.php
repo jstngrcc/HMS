@@ -34,7 +34,7 @@ $maxGuests = $rooms['MaxOccupancy'];  // 2
                 <img id="modal-image" src="/assets/images/deluxe.jpg" alt="Room Image"
                     class="w-24 h-24 rounded object-cover">
                 <div class="flex flex-col gap-2">
-                    <h5 id="modal-room-type" class="font-crimson font-semibold text-black">Room
+                    <h5 id="modal-room-type" class="font-crimson font-semibold text-black text-xl">Room
                         <?= htmlspecialchars($_GET['room'] ?? '') ?> - <?= $rooms['RoomTypeName'] ?> Room
                     </h5>
                     <h5 class="font-roboto font-semibold text-black">Time Duration:
@@ -75,7 +75,7 @@ $maxGuests = $rooms['MaxOccupancy'];  // 2
                     <p id="modal-guest-charge" class="font-roboto font-normal text-black">₱0.00</p>
                 </div>
                 <div class="flex justify-between">
-                    <h6 class="font-roboto font-semibold text-black">Total (12% tax incl.)</h6>
+                    <h6 class="font-roboto font-semibold text-black">Subtotal</h6>
                     <p id="modal-total" class="font-roboto font-normal text-black">₱2,016.00</p>
                 </div>
             </div>
