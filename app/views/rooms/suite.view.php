@@ -241,11 +241,6 @@ $maxGuests = $rooms['MaxOccupancy'];  // 2
                     experience. Perfect for solo travelers or couples looking for a comfortable space to unwind
                     after a
                     day of exploring.</div>
-                <div class="justify-center text-zinc-500 text-md font-roboto font-normal">MAX NO. GUESTS</div>
-                <ul class="text-black text-md font-normal font-roboto">
-                    <li>Single – 2 Guests</li>
-                    <li>Double – 3 Guests</li>
-                </ul>
                 <div class="justify-center text-zinc-500 text-md font-roboto font-normal">CHECK-IN AND CHECK-OUT
                     TIME
                     <ul class="text-black text-md font-normal font-roboto">
