@@ -12,6 +12,20 @@ class PagesController
         require_once '../app/views/static/privacy.view.php';
     }
 
+    public function admin() 
+    {
+        $logged_in = $this->getAuthState();
+        $cartCount = $this->getCartCount();
+        require_once '../app/views/admin/admin.view.php';
+    }
+
+    public function admin_login()
+    {
+        $logged_in = $this->getAuthState();
+        $cartCount = $this->getCartCount();
+        require_once '../app/views/admin/login.view.php';
+    }
+
     public function terms()
     {
         $logged_in = $this->getAuthState();
@@ -115,8 +129,6 @@ class PagesController
 
         require_once '../app/views/rooms/suite.view.php';
     }
-
-
 
     public function reservation()
     {
