@@ -48,9 +48,9 @@ INSERT INTO RoomTypes (RoomTypeName, BasePrice, BedTypeID, BedCount, MaxOccupanc
 ('Standard Single', 1800.00, 2, 1, 2),
 ('Deluxe Single', 2300.00, 3, 1, 4),
 ('Suite Single', 3000.00, 4, 1, 6),
-('Standard Double', 2700.00, 2, 2, 2),
-('Deluxe Double', 3200.00, 3, 2, 4),
-('Suite Double', 4000.00, 4, 2, 6);
+('Standard Double', 2700.00, 2, 2, 3),
+('Deluxe Double', 3200.00, 3, 2, 6),
+('Suite Double', 4000.00, 4, 2, 10);
 
 INSERT INTO Rooms (RoomNumber, FloorID, RoomTypeID) VALUES
 ('101',1,1),('102',1,1),('103',1,2),('104',1,2),('105',1,3),

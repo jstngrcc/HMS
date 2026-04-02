@@ -185,11 +185,16 @@ CREATE PROCEDURE SearchAvailableRooms(
     IN pChildren INT,
     IN pRoom VARCHAR(50),
     IN pRoomType VARCHAR(50),
-    IN pCartID INT  -- current user's cart
+    IN pCartID INT
 )
 BEGIN
-    SELECT r.RoomNumber, rt.RoomTypeName, rt.BasePrice,
-           rt.MaxOccupancy, rt.BedCount, bt.BedName
+    SELECT 
+        r.RoomNumber, 
+        rt.RoomTypeName, 
+        rt.BasePrice,
+        rt.MaxOccupancy,  -- Use the actual value from RoomTypes
+        rt.BedCount, 
+        bt.BedName
     FROM Rooms r
     JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
     LEFT JOIN BedTypes bt ON rt.BedTypeID = bt.BedTypeID

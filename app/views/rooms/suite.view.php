@@ -19,7 +19,7 @@ $rooms = [
 // $roomCategory = 'standard';
 
 // For deluxe.php page:
-$roomCategory = 'deluxe';
+// $roomCategory = 'deluxe';
 
 // For suite.php page:
 $roomCategory = 'suite';
