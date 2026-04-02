@@ -129,7 +129,8 @@ class ReservationController
 
             $reservationModel->sendReservationConfirmation(
                 $confirmationEmail,
-                $reservationData['BookingToken']
+                $reservationData['BookingToken'],
+                number_format(($totalBeforeDiscount - $discountAmount) * 1.12, 2, '.', ',')
             );
 
             echo json_encode([

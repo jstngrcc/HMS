@@ -143,7 +143,7 @@ class Reservation
         }
     }
 
-    public function sendReservationConfirmation($guestEmail, $bookingToken)
+    public function sendReservationConfirmation($guestEmail, $bookingToken, $totalAmount)
     {
         // Fetch reservation details
         $reservationDetails = $this->getReservationWithGuest($bookingToken);
@@ -159,7 +159,7 @@ class Reservation
         $roomNumber = $details['RoomNumber'];
         $roomType = $details['RoomType'];
 
-        $cancelUrl = "http://hms.local/reservation/cancel/guest/{$bookingToken}";
+        $cancelUrl = "http://hms.aniagtech.com/reservation/cancel/guest/{$bookingToken}";
 
         $mail = new PHPMailer(true);
 
@@ -183,8 +183,9 @@ class Reservation
             Your reservation has been confirmed.<br>
             <strong>Booking Token:</strong> {$bookingToken}<br>
             <strong>Room:</strong> {$roomType} (#{$roomNumber})<br>
-            <strong>Check-in:</strong> {$checkIn}<br>
-            <strong>Check-out:</strong> {$checkOut}<br><br>
+            <strong>Check-in:</strong> {$checkIn} 12:00 PM<br>
+            <strong>Check-out:</strong> {$checkOut} 11:00 AM<br><br>
+            <strong>Total Amount:</strong> {$totalAmount}<br><br>
             If you need to cancel your reservation, please click the link below:<br>
             <a href='{$cancelUrl}' target='_blank'>Cancel Reservation</a><br><br>
             Thank you for choosing our hotel.

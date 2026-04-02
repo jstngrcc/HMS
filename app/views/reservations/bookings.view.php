@@ -128,7 +128,7 @@ $statusMap = [
         </div>
     <?php else: ?>
         <div class="text-neutral-700 font-light font-crimson mb-4">
-            You must be logged in to view your bookings.
+            You must be logged in to view your bookings. Only bookings made after creating an account are saved.
             <span class="text-yellow-900 text-xs font-normal font-['Roboto']">
                 <a href="/registration" class="hover:underline">Register or Login</a>
             </span> now to make checkout faster and keep track of your orders.
