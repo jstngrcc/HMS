@@ -75,14 +75,14 @@ class Reservation
         }
     }
 
-    public function bookRoomsAtomic($guestID, $paymentMethodID, $totalAmount, $cartRows)
+    public function bookRoomsAtomic($guestID, $paymentMethodID, $totalAmount, $cartRows, $discountType = null, $discountValue = 0, $discountCardNumber = null)
     {
         $cartJSON = json_encode($cartRows);
 
         // Call procedure using execute_query
         $this->conn->execute_query(
-            "CALL BookRoomsAtomic(?, ?, ?, ?, @ReservationID, @BookingToken, @Success, @Message)",
-            [$guestID, $paymentMethodID, $totalAmount, $cartJSON]
+            "CALL BookRoomsAtomic(?, ?, ?, ?, ?, ?, ?, @ReservationID, @BookingToken, @Success, @Message)",
+            [$guestID, $paymentMethodID, $totalAmount, $cartJSON, $discountType, $discountValue, $discountCardNumber]
         );
 
         $result = $this->conn->query("SELECT @ReservationID AS ReservationID, @BookingToken AS BookingToken, @Success AS Success, @Message AS Message");
@@ -90,10 +90,10 @@ class Reservation
         $result->free();
 
         if (!(bool) $row['Success']) {
-            if (empty($row['Mesage'])) {
+            if (empty($row['Message'])) {
                 throw new Exception('Room is already booked for these dates.');
             } else {
-                throw new Exception($row['message']);
+                throw new Exception($row['Message']);
             }
         }
 

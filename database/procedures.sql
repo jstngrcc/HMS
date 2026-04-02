@@ -597,6 +597,9 @@ CREATE PROCEDURE BookRoomsAtomic(
     IN pPaymentMethodID INT,
     IN pAmount DECIMAL(10,2),
     IN pCartJSON TEXT,
+    IN pDiscountType VARCHAR(50),
+    IN pDiscountValue DECIMAL(10,2),
+    IN pDiscountCardNumber VARCHAR(50),
     OUT pReservationID INT,
     OUT pBookingToken CHAR(36),
     OUT pSuccess BOOLEAN,
@@ -623,6 +626,13 @@ BEGIN
     -- Insert payment
     INSERT INTO Payments (ReservationID, MethodID, Amount, PaymentStatus)
     VALUES (pReservationID, pPaymentMethodID, pAmount, 'pending');
+
+    -- Insert discount info if any
+    IF pDiscountType IS NOT NULL AND pDiscountValue > 0 THEN
+        INSERT INTO ReservationDiscounts
+        (ReservationID, DiscountType, DiscountValue, CardNumber)
+        VALUES (pReservationID, pDiscountType, pDiscountValue, pDiscountCardNumber);
+    END IF;
 
     -- Get number of rooms
     SET n = JSON_LENGTH(pCartJSON);
