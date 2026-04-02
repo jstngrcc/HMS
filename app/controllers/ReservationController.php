@@ -18,12 +18,12 @@ class ReservationController
 
         $input = json_decode(file_get_contents('php://input'), true);
 
-        $totalBeforeDiscount = floatval($input['totalBeforeDiscount'] ?? 0); // new
-        $discountAmount = floatval($input['discountAmount'] ?? 0);           // new
+        $totalBeforeDiscount = floatval($input['totalBeforeDiscount'] ?? 0);
+        $discountAmount = floatval($input['discountAmount'] ?? 0);
 
-        // Extract guest info
         $guest = $input['guest'] ?? [];
         $paymentMethod = $input['paymentMethod'] ?? '';
+
         $paymentMap = ['Cash' => 1, 'Card' => 2, 'E-Wallet' => 3, 'Bank' => 4];
         $paymentMethodID = $paymentMap[$paymentMethod] ?? null;
 
@@ -34,11 +34,8 @@ class ReservationController
         $phoneNo = trim($guest['phone'] ?? '');
         $phone = $country . $phoneNo;
         $birthDate = trim($guest['birthDate'] ?? '');
-        $totalAmount = trim($input['totalAmount'] ?? 0);
 
-        // Extract discount info
-        $discountType = $input['discountType'] ?? null; // e.g., "Senior", "PWD"
-        $discountValue = floatval($input['discountValue'] ?? 0); // numeric percentage or amount
+        $discountType = $input['discountType'] ?? null;
         $discountCardNumber = $input['discountCardNumber'] ?? null;
 
         if (!$fname || !$lname || !$email || !$phone || !$birthDate || !$paymentMethodID) {
@@ -59,29 +56,28 @@ class ReservationController
         $reservationModel = new Reservation($GLOBALS['conn']);
 
         try {
-            // Determine guest ID
+
+            // =========================
+            // Resolve GuestID
+            // =========================
             if (!isset($_SESSION['logged_in_user_id'])) {
                 $guestIDObj = $userModel->createGuest($email, $fname, $lname, $phone, $birthDate);
-                $guestID = $guestIDObj->GuestID ?? $guestIDObj;
+                $guestID = is_object($guestIDObj) ? $guestIDObj->GuestID : $guestIDObj;
             } else {
                 $currentUserGuestIDObj = $userModel->getGuestIDbyUserID($_SESSION['logged_in_user_id']);
                 $currentUserEmail = $userModel->getGuestEmailByID($currentUserGuestIDObj->GuestID);
 
                 if ($email !== $currentUserEmail) {
                     $newGuest = $userModel->createGuest($email, $fname, $lname, $phone, $birthDate);
-                    if (is_object($newGuest) && isset($newGuest->GuestID)) {
-                        $guestID = $newGuest->GuestID;
-                    } elseif (is_int($newGuest) || is_string($newGuest)) {
-                        $guestID = $newGuest;
-                    } else {
-                        throw new Exception("Failed to create guest. GuestID is null.");
-                    }
+                    $guestID = is_object($newGuest) ? $newGuest->GuestID : $newGuest;
                 } else {
                     $guestID = $currentUserGuestIDObj->GuestID;
                 }
             }
 
-            // Fetch cart rows
+            // =========================
+            // Fetch Cart (IMPORTANT: must include NumChildren)
+            // =========================
             $cartRows = $cartModel->getCartRows();
 
             if (empty($cartRows)) {
@@ -89,41 +85,64 @@ class ReservationController
                 return;
             }
 
+            // Ensure children field exists (defensive)
+            foreach ($cartRows as &$row) {
+                if (!isset($row['NumChildren'])) {
+                    $row['NumChildren'] = 0;
+                }
+            }
+
+            // =========================
+            // Book
+            // =========================
             $reservationData = $reservationModel->bookRoomsAtomic(
                 $guestID,
                 $paymentMethodID,
-                $totalBeforeDiscount,   // total before discount
+                $totalBeforeDiscount,
                 $cartRows,
                 $discountType,
-                $discountAmount,        // now passing discount amount
+                $discountAmount,
                 $discountCardNumber
             );
 
-            // Link reservation to logged-in user
+            // =========================
+            // Link user
+            // =========================
             if (isset($_SESSION['logged_in_user_id'])) {
-                $reservationModel->linkReservationToUser($reservationData['ReservationID'], $_SESSION['logged_in_user_id']);
+                $reservationModel->linkReservationToUser(
+                    $reservationData['ReservationID'],
+                    $_SESSION['logged_in_user_id']
+                );
             }
 
-            // Remove cart items
-            $cartModel->removeCartItems($cartID);
+            // =========================
+            // Clear cart
+            // =========================
+            $cartModel->removeCartItems();
 
-            // Send reservation confirmation
+            // =========================
+            // Email
+            // =========================
             $confirmationEmail = isset($_SESSION['logged_in_user_id'])
-                ? $userModel->getGuestEmailByID($currentUserGuestIDObj->GuestID)
+                ? $userModel->getGuestEmailByID($guestID)
                 : $email;
 
-            $reservationModel->sendReservationConfirmation($confirmationEmail, $reservationData['BookingToken']);
+            $reservationModel->sendReservationConfirmation(
+                $confirmationEmail,
+                $reservationData['BookingToken']
+            );
 
             echo json_encode([
                 "success" => true,
-                // "message" => "Reservation completed successfully.",
-                "message" => "$paymentMethodID $totalBeforeDiscount $discountType $discountAmount $discountCardNumber",
+                "message" => "Reservation completed successfully.",
                 "BookingToken" => $reservationData['BookingToken']
             ]);
 
         } catch (Exception $e) {
+
             if ($e->getMessage() === 'Room is already booked for these dates.') {
                 $removedItems = $cartModel->removeUnavailableCartItems();
+
                 echo json_encode([
                     "success" => false,
                     "error" => "Some rooms in your cart are no longer available.",
@@ -234,7 +253,7 @@ class ReservationController
         if (!$bookingToken) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Missing booking token.'
+                'error' => 'Missing booking token.'
             ]);
             exit;
         }
@@ -245,13 +264,12 @@ class ReservationController
         if (!$reservation) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Invalid or non-cancellable reservation.'
+                'error' => 'Invalid or non-cancellable reservation.'
             ]);
             exit;
         }
 
         try {
-            // If userId is null, treat as guest cancel
             $reservationModel->cancelReservationGuest($bookingToken);
 
             echo json_encode([
@@ -261,7 +279,7 @@ class ReservationController
         } catch (Exception $e) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Failed to cancel reservation: ' . $e->getMessage()
+                'error' => $e->getMessage()
             ]);
         }
     }

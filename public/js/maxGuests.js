@@ -1,49 +1,48 @@
 document.addEventListener("DOMContentLoaded", () => {
   const roomRadios = document.querySelectorAll('input[name="room"]');
-  const guestsInput = document.getElementById('guests');
+  const adultsInput = document.getElementById('adults');
+  const childrenInput = document.getElementById('children');
   const guestsLabel = document.getElementById('guests-label');
   const guestAddon = document.getElementById("guests-addon");
 
   const roomType = document.body.dataset.roomType;
 
   const fullConfig = {
-    standard: {
-      single: { min: 1, max: 2, add: 1 },
-      double: { min: 1, max: 3, add: 2 }
-    },
-    deluxe: {
-      single: { min: 1, max: 4, add: 1 },
-      double: { min: 1, max: 6, add: 2 }
-    },
-    suite: {
-      single: { min: 1, max: 6, add: 1 },
-      double: { min: 1, max: 10, add: 2 }
-    }
+    standard: { single: 2, double: 3 },
+    deluxe: { single: 4, double: 6 },
+    suite: { single: 6, double: 10 }
   };
 
-  function updateGuestUI() {
+  function updateMaxGuests() {
     const selected = document.querySelector('input[name="room"]:checked');
     if (!selected) return;
 
     const occupancy = selected.value;
-    const config = fullConfig[roomType]?.[occupancy];
-    if (!config) return;
+    const maxGuests = fullConfig[roomType][occupancy];
 
-    const { min, max, add } = config;
+    guestsLabel.textContent = `Guests (Max ${maxGuests})`;
+    guestAddon.textContent = "Additional guests (above 1) cost 10% of the room rate per night.";
 
-    guestsInput.min = min;
-    guestsInput.max = max;
+    const totalGuests = Number(adultsInput.value) + Number(childrenInput.value);
 
-    guestsLabel.textContent = `Guests (Max ${max})`;
-    guestAddon.textContent = `Additional guests (above ${add}) cost 10% of the room rate per night.`;
-
-    if (parseInt(guestsInput.value) > max) guestsInput.value = max;
-    if (parseInt(guestsInput.value) < min) guestsInput.value = min;
+    // Adjust children if total exceeds max
+    if (totalGuests > maxGuests) {
+      childrenInput.value = Math.max(0, maxGuests - Number(adultsInput.value));
+    }
   }
 
-  roomRadios.forEach(radio => {
-    radio.addEventListener("change", updateGuestUI);
+  adultsInput.addEventListener('input', () => {
+    if (Number(adultsInput.value) < 1) adultsInput.value = 1; // Require at least 1 adult
+    updateMaxGuests();
+    handleUpdate(); // Update pricing
   });
 
-  updateGuestUI();
+  childrenInput.addEventListener('input', () => {
+    if (Number(childrenInput.value) < 0) childrenInput.value = 0;
+    updateMaxGuests();
+    handleUpdate(); // Update pricing
+  });
+
+  roomRadios.forEach(radio => radio.addEventListener("change", updateMaxGuests));
+  updateMaxGuests();
 });

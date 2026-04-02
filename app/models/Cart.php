@@ -8,7 +8,7 @@ class Cart
     {
         $this->conn = $db;
     }
-    public function addRoomToCart($roomNumber, $checkin, $checkout, $adults)
+    public function addRoomToCart($roomNumber, $checkin, $checkout, $adults, $children)
     {
         $CartID = $_SESSION['cart_id'];
 
@@ -39,11 +39,11 @@ class Cart
             throw new Exception("This room is already in your cart for overlapping dates.");
         }
 
-        // Call stored procedure
+        // Call stored procedure (UPDATED PARAMS)
         try {
             $this->conn->execute_query(
-                "CALL AddRoomToCart(?, ?, ?, ?, ?)",
-                [$CartID, $roomID, $checkin, $checkout, $adults]
+                "CALL AddRoomToCart(?, ?, ?, ?, ?, ?)",
+                [$CartID, $roomID, $checkin, $checkout, $adults, $children]
             );
             return true;
         } catch (mysqli_sql_exception $e) {
@@ -53,15 +53,14 @@ class Cart
 
     public function getCartAmount()
     {
-        $CartID = $_SESSION["cart_id"];
+        $CartID = $_SESSION["cart_id"] ?? null;
 
         if (!$CartID) {
             return 0;
         }
 
-        $result = $this->conn->execute_query("
-                SELECT COUNT(*) as total
-                FROM CartRooms WHERE CartID = ?",
+        $result = $this->conn->execute_query(
+            "SELECT COUNT(*) as total FROM CartRooms WHERE CartID = ?",
             [$CartID]
         );
 
@@ -73,20 +72,28 @@ class Cart
         $CartID = $_SESSION["cart_id"];
 
         if (!$CartID) {
-            return 0;
+            return [];
         }
 
         $result = $this->conn->execute_query(
-            "SELECT cr.CartRoomID, r.RoomID, r.RoomNumber, rt.RoomTypeName, rt.BasePrice, cr.NumAdults, cr.CheckInDate, cr.CheckOutDate
-            FROM CartRooms cr
-            INNER JOIN Rooms r ON cr.RoomID = r.RoomID
-            INNER JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
-            WHERE cr.CartID = ?",
+            "SELECT 
+            cr.CartRoomID,
+            r.RoomID,
+            r.RoomNumber,
+            rt.RoomTypeName,
+            rt.BasePrice,
+            cr.NumAdults,
+            cr.NumChildren, -- IMPORTANT
+            cr.CheckInDate,
+            cr.CheckOutDate
+        FROM CartRooms cr
+        INNER JOIN Rooms r ON cr.RoomID = r.RoomID
+        INNER JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
+        WHERE cr.CartID = ?",
             [$CartID]
         );
 
         return $result->fetch_all(MYSQLI_ASSOC);
-
     }
 
     public function removeCartItem(int $cartRoomID)
@@ -135,16 +142,17 @@ class Cart
         return $removedItems; // return removed items for frontend display
     }
 
-    public function removeCartItems(int $cartRoomID)
+    public function removeCartItems()
     {
         $CartID = $_SESSION['cart_id'] ?? null;
+
         if (!$CartID) {
             throw new Exception("No cart found for session.");
         }
 
         try {
             $this->conn->execute_query(
-                "DELETE FROM CartRooms WHERE CartID =?",
+                "DELETE FROM CartRooms WHERE CartID = ?",
                 [$CartID]
             );
             return true;

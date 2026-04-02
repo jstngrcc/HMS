@@ -92,14 +92,15 @@ class Room
     public function searchAvailable($filters)
     {
         $result = $this->conn->execute_query(
-            "CALL SearchAvailableRooms(?, ?, ?, ?, ?, ?)",
+            "CALL SearchAvailableRooms(?, ?, ?, ?, ?, ?, ?)",
             [
-                $filters['checkin'] ?? null,
-                $filters['checkout'] ?? null,
+                $filters['checkin'],
+                $filters['checkout'],
                 $filters['adults'] ?? null,
                 $filters['children'] ?? null,
                 $filters['room'] ?? null,       // single/double
-                $filters['room_type'] ?? null   // Standard/Deluxe/Suite
+                $filters['room_type'] ?? null,
+                $filters['cartID']
             ]
         );
 

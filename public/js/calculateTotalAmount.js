@@ -48,22 +48,18 @@ function updatePriceUI({ nights, guests, roomType }) {
 }
 
 function handleUpdate() {
-    const guestInput = document.getElementById("guests");
-    guests = Number(guestInput.value) || 1;
+    const adults = Number(document.getElementById("adults").value) || 1;
+    const children = Number(document.getElementById("children").value) || 0;
+    const guests = adults + children;
 
     const selectedRoom = document.querySelector('input[name="room"]:checked');
-    roomType = selectedRoom ? selectedRoom.value : 'single';
+    const roomType = selectedRoom ? selectedRoom.value : 'single';
 
-    // --- NEW: calculate nights from datepicker ---
     const daterangeInput = document.getElementById("daterange");
     const dates = daterangeInput.value.split(' to ');
     const checkin = dates[0] || '';
     const checkout = dates[1] || '';
-    if (checkin && checkout) {
-        nights = getNights(checkin.replace(/\//g, '-'), checkout.replace(/\//g, '-'));
-    } else {
-        nights = 1;
-    }
+    const nights = (checkin && checkout) ? getNights(checkin.replace(/\//g, '-'), checkout.replace(/\//g, '-')) : 1;
 
     updatePriceUI({ nights, guests, roomType });
 }

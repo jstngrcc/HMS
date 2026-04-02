@@ -86,21 +86,31 @@ class Reservation
     ) {
         $cartJSON = json_encode($cartRows);
 
+        // Clear previous results
+        while ($this->conn->more_results()) {
+            $this->conn->next_result();
+        }
+
         $this->conn->execute_query(
             "CALL BookRoomsAtomic(?, ?, ?, ?, ?, ?, ?, @ReservationID, @BookingToken, @Success, @Message)",
             [$guestID, $paymentMethodID, $totalBeforeDiscount, $cartJSON, $discountType, $discountAmount, $discountCardNumber]
         );
+
+        // Flush any remaining results
+        while ($this->conn->more_results()) {
+            if ($res = $this->conn->store_result()) {
+                $res->free();
+            }
+            $this->conn->next_result();
+        }
 
         $result = $this->conn->query("SELECT @ReservationID AS ReservationID, @BookingToken AS BookingToken, @Success AS Success, @Message AS Message");
         $row = $result->fetch_assoc();
         $result->free();
 
         if (!(bool) $row['Success']) {
-            if (empty($row['Message'])) {
-                throw new Exception('Room is already booked for these dates.');
-            } else {
-                throw new Exception($row['Message']);
-            }
+            $msg = empty($row['Message']) ? 'Room is already booked for these dates.' : $row['Message'];
+            throw new Exception($msg);
         }
 
         return [
@@ -130,6 +140,62 @@ class Reservation
             return true;
         } else {
             throw new Exception('Failed to retrieve procedure output: ' . $this->conn->error);
+        }
+    }
+
+    public function sendReservationConfirmation($guestEmail, $bookingToken)
+    {
+        // Fetch reservation details
+        $reservationDetails = $this->getReservationWithGuest($bookingToken);
+
+        if (empty($reservationDetails)) {
+            throw new Exception("Reservation not found for the provided token.");
+        }
+
+        $details = $reservationDetails[0]; // Take the first row
+        $guestName = $details['FirstName'] . ' ' . $details['LastName'];
+        $checkIn = date('Y-m-d', strtotime($details['CheckInDate']));
+        $checkOut = date('Y-m-d', strtotime($details['CheckOutDate']));
+        $roomNumber = $details['RoomNumber'];
+        $roomType = $details['RoomType'];
+
+        $cancelUrl = "http://hms.local/reservation/cancel/guest/{$bookingToken}";
+
+        $mail = new PHPMailer(true);
+
+        try {
+            $mail->isSMTP();
+            $mail->Host = $_ENV['MAIL_HOST'];
+            $mail->SMTPAuth = true;
+            $mail->Username = $_ENV['MAIL_USERNAME'];
+            $mail->Password = $_ENV['MAIL_PASSWORD'];
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = $_ENV['MAIL_PORT'];
+
+            $mail->setFrom($_ENV['MAIL_FROM'], $_ENV['MAIL_FROM_NAME']);
+            $mail->addAddress($guestEmail);
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Reservation Confirmation';
+
+            $mail->Body = "
+            Dear {$guestName},<br><br>
+            Your reservation has been confirmed.<br>
+            <strong>Booking Token:</strong> {$bookingToken}<br>
+            <strong>Room:</strong> {$roomType} (#{$roomNumber})<br>
+            <strong>Check-in:</strong> {$checkIn}<br>
+            <strong>Check-out:</strong> {$checkOut}<br><br>
+            If you need to cancel your reservation, please click the link below:<br>
+            <a href='{$cancelUrl}' target='_blank'>Cancel Reservation</a><br><br>
+            Thank you for choosing our hotel.
+        ";
+
+            $mail->AltBody = "Dear {$guestName},\n\nYour reservation has been confirmed.\nBooking Token: {$bookingToken}\nRoom: {$roomType} (#{$roomNumber})\nCheck-in: {$checkIn}\nCheck-out: {$checkOut}\n\nThank you for choosing our hotel.";
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("Failed to send confirmation email: " . $mail->ErrorInfo);
         }
     }
     public function cancelReservation($bookingToken, $guestID)
@@ -352,7 +418,8 @@ class Reservation
             g.PhoneContact,
             rr.CheckInDate,
             rr.CheckOutDate,
-            rr.NumAdults AS NumGuests,
+            rr.NumAdults,
+            rr.NumChildren, -- added children
             r.RoomNumber,
             rt.RoomTypeName AS RoomType,
             rt.BasePrice
@@ -368,10 +435,10 @@ class Reservation
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-public function getReservationPayment($reservationID)
-{
-    $result = $this->conn->execute_query(
-        "SELECT 
+    public function getReservationPayment($reservationID)
+    {
+        $result = $this->conn->execute_query(
+            "SELECT 
             p.PaymentID, 
             pm.MethodName AS PaymentMethod, 
             p.PaymentStatus,
@@ -382,67 +449,12 @@ public function getReservationPayment($reservationID)
          JOIN PaymentMethods pm ON pm.MethodID = p.MethodID
          WHERE p.ReservationID = ? 
          LIMIT 1",
-        [$reservationID]
-    );
+            [$reservationID]
+        );
 
-    return $result ? $result->fetch_assoc() : null;
-}
-
-    public function sendReservationConfirmation($guestEmail, $bookingToken)
-    {
-        // Fetch reservation details
-        $reservationDetails = $this->getReservationWithGuest($bookingToken);
-
-        if (empty($reservationDetails)) {
-            throw new Exception("Reservation not found for the provided token.");
-        }
-
-        $details = $reservationDetails[0]; // Take the first row
-        $guestName = $details['FirstName'] . ' ' . $details['LastName'];
-        $checkIn = date('Y-m-d', strtotime($details['CheckInDate']));
-        $checkOut = date('Y-m-d', strtotime($details['CheckOutDate']));
-        $roomNumber = $details['RoomNumber'];
-        $roomType = $details['RoomType'];
-
-        $cancelUrl = "http://hms.local/reservation/cancel/guest/{$bookingToken}";
-
-        $mail = new PHPMailer(true);
-
-        try {
-            $mail->isSMTP();
-            $mail->Host = $_ENV['MAIL_HOST'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $_ENV['MAIL_USERNAME'];
-            $mail->Password = $_ENV['MAIL_PASSWORD'];
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = $_ENV['MAIL_PORT'];
-
-            $mail->setFrom($_ENV['MAIL_FROM'], $_ENV['MAIL_FROM_NAME']);
-            $mail->addAddress($guestEmail);
-
-            $mail->isHTML(true);
-            $mail->Subject = 'Reservation Confirmation';
-
-            $mail->Body = "
-            Dear {$guestName},<br><br>
-            Your reservation has been confirmed.<br>
-            <strong>Booking Token:</strong> {$bookingToken}<br>
-            <strong>Room:</strong> {$roomType} (#{$roomNumber})<br>
-            <strong>Check-in:</strong> {$checkIn}<br>
-            <strong>Check-out:</strong> {$checkOut}<br><br>
-            If you need to cancel your reservation, please click the link below:<br>
-            <a href='{$cancelUrl}' target='_blank'>Cancel Reservation</a><br><br>
-            Thank you for choosing our hotel.
-        ";
-
-            $mail->AltBody = "Dear {$guestName},\n\nYour reservation has been confirmed.\nBooking Token: {$bookingToken}\nRoom: {$roomType} (#{$roomNumber})\nCheck-in: {$checkIn}\nCheck-out: {$checkOut}\n\nThank you for choosing our hotel.";
-
-            $mail->send();
-            return true;
-        } catch (Exception $e) {
-            throw new Exception("Failed to send confirmation email: " . $mail->ErrorInfo);
-        }
+        return $result ? $result->fetch_assoc() : null;
     }
+
     public function cancelReservationGuest($bookingToken)
     {
         // Validate reservation exists and status allows cancellation
@@ -469,5 +481,4 @@ public function getReservationPayment($reservationID)
 
         return true;
     }
-
 }

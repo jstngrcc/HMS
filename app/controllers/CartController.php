@@ -19,9 +19,18 @@ class CartController
             return;
         }
 
-        $adults = (int) $_POST['adults'];
+        $adults = isset($_POST['adults']) ? (int) $_POST['adults'] : 0;
+        $children = isset($_POST['children']) ? (int) $_POST['children'] : 0;
         $roomID = (int) $_POST['roomID'];
         $dateRange = $_POST['checkin'];
+
+        // Normalize
+        if ($adults < 0)
+            $adults = 0;
+        if ($children < 0)
+            $children = 0;
+
+        $totalGuests = $adults + $children;
 
         // ---------- VALIDATION ----------
         if (empty($dateRange)) {
@@ -56,13 +65,12 @@ class CartController
         $checkin = $checkinObj->format('Y-m-d');
         $checkout = $checkoutObj->format('Y-m-d');
 
-
         $today = new DateTime();
         $today->setTime(0, 0, 0);
         $checkinObj->setTime(0, 0, 0);
         $checkoutObj->setTime(0, 0, 0);
 
-        if ($checkinObj > $checkoutObj) {
+        if ($checkinObj >= $checkoutObj) {
             echo json_encode([
                 "success" => false,
                 "error" => "Check-out date must be after check-in date."
@@ -78,7 +86,7 @@ class CartController
             exit;
         }
 
-        if ($adults < 1) {
+        if ($totalGuests < 1) {
             echo json_encode([
                 "success" => false,
                 "error" => "Please input at least 1 guest."
@@ -98,17 +106,18 @@ class CartController
         try {
             $cart = new Cart($GLOBALS['conn']);
 
-            $cart->addRoomToCart($roomID, $checkin, $checkout, $adults);
+            // IMPORTANT: pass children
+            $cart->addRoomToCart($roomID, $checkin, $checkout, $adults, $children);
 
-            $cart = new Cart($GLOBALS['conn']);
             $cartCount = $cart->getCartAmount();
 
             echo json_encode([
                 "success" => true,
                 "message" => "Room added to cart!",
-                "cartCount" => $cartCount // <-- add this
+                "cartCount" => $cartCount
             ]);
             exit;
+
         } catch (Exception $e) {
             echo json_encode([
                 "success" => false,
@@ -155,14 +164,13 @@ class CartController
             $cartModel = new Cart($GLOBALS['conn']);
             $cartModel->removeCartItem($cartRoomID);
 
-            $newCartCount = $cartModel->getCartAmount();
-
             echo json_encode([
                 'success' => true,
                 'message' => 'Item removed from cart',
-                'cartCount' => $newCartCount
+                'cartCount' => $cartModel->getCartAmount()
             ]);
             exit;
+
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }

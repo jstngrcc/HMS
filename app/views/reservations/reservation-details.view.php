@@ -50,7 +50,7 @@ if (!empty($payment) && isset($payment['TotalBeforeDiscount'], $payment['Discoun
         $baseOccupancy = stripos($room['RoomType'], 'Single') !== false ? 1 : 2;
 
         // Extra guest charge: 10% per extra guest
-        $extraGuests = max(0, $room['NumGuests'] - $baseOccupancy);
+        $extraGuests = max(0, $room['NumAdults'] + $room['NumChildren'] - $baseOccupancy);
         $additionalGuestCharge += $room['BasePrice'] * 0.10 * $extraGuests;
 
         // Guest discount: 20% per extra guest (or your configured value)
@@ -178,7 +178,7 @@ if (!empty($payment) && isset($payment['TotalBeforeDiscount'], $payment['Discoun
                                                     <p class="justify-center text-black text-sm font-normal font-roboto">Guests
                                                     </p>
                                                     <p class="justify-center text-black text-sm font-normal font-roboto">
-                                                        <?php echo htmlspecialchars($room['NumGuests']); ?>
+                                                        <?php echo htmlspecialchars($room['NumAdults'] + $room['NumChildren']); ?>
                                                     </p>
                                                 </div>
                                                 <div class="flex justify-between">

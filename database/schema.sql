@@ -164,11 +164,14 @@ CREATE TABLE IF NOT EXISTS ReservationRooms (
     ReservationID INT NOT NULL,
     CheckInDate DATE NOT NULL,
     CheckOutDate DATE NOT NULL,
-    NumAdults INT DEFAULT 1,
+    NumAdults INT NOT NULL DEFAULT 1,
+    NumChildren INT NOT NULL DEFAULT 0,
     RoomID INT NOT NULL,
 
     FOREIGN KEY (ReservationID) REFERENCES Reservations(ReservationID),
-    FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID)
+    FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
+    CHECK (NumAdults >= 0),
+    CHECK (NumChildren >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS UserReservations (
@@ -234,7 +237,9 @@ CREATE TABLE IF NOT EXISTS CartRooms (
     RoomID INT NOT NULL,
     CheckInDate DATE NOT NULL,
     CheckOutDate DATE NOT NULL,
-    NumAdults INT NOT NULL,
+
+    NumAdults INT NOT NULL DEFAULT 1,
+    NumChildren INT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (CartID) REFERENCES ReservationCarts(CartID),
     FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID)

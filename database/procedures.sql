@@ -184,7 +184,8 @@ CREATE PROCEDURE SearchAvailableRooms(
     IN pAdults INT,
     IN pChildren INT,
     IN pRoom VARCHAR(50),
-    IN pRoomType VARCHAR(50)  -- now a string like 'Standard', 'Deluxe', 'Suite'
+    IN pRoomType VARCHAR(50),
+    IN pCartID INT  -- current user's cart
 )
 BEGIN
     SELECT r.RoomNumber, rt.RoomTypeName, rt.BasePrice,
@@ -193,36 +194,31 @@ BEGIN
     JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID
     LEFT JOIN BedTypes bt ON rt.BedTypeID = bt.BedTypeID
     WHERE r.Status = 'available'
-
-    -- Adults + Children (total occupancy)
-    AND (
-        pAdults IS NULL OR
-        rt.MaxOccupancy >= (pAdults + IFNULL(pChildren, 0))
-    )
-
-    -- Room type (dropdown)
-    AND (pRoomType IS NULL OR rt.RoomTypeName LIKE CONCAT(pRoomType, '%'))
-
-    -- Room radio (single/double)
-    AND (
-        pRoom IS NULL OR
-        (pRoom = 'single' AND rt.BedCount = 1) OR
-        (pRoom = 'double' AND rt.BedCount >= 2)
-    )
-
-    -- Availability
-    AND (
-        pCheckIn IS NULL OR pCheckOut IS NULL OR
-        NOT EXISTS (
-            SELECT 1
-            FROM ReservationRooms rr
-            JOIN Reservations res ON rr.ReservationID = res.ReservationID
-            WHERE rr.RoomID = r.RoomID
+      AND (pAdults IS NULL OR rt.MaxOccupancy >= (pAdults + IFNULL(pChildren, 0)))
+      AND (pRoomType IS NULL OR rt.RoomTypeName LIKE CONCAT(pRoomType, '%'))
+      AND (pRoom IS NULL 
+           OR (pRoom = 'single' AND rt.BedCount = 1) 
+           OR (pRoom = 'double' AND rt.BedCount >= 2))
+      -- Exclude rooms in existing reservations
+      AND NOT EXISTS (
+          SELECT 1
+          FROM ReservationRooms rr
+          JOIN Reservations res ON rr.ReservationID = res.ReservationID
+          JOIN ReservationStatus rs ON res.StatusID = rs.StatusID
+          WHERE rr.RoomID = r.RoomID
             AND rr.CheckInDate < pCheckOut
             AND rr.CheckOutDate > pCheckIn
-        )
-    )
-
+            AND rs.StatusName IN ('confirmed', 'pending')
+      )
+      -- Exclude rooms in user's cart
+      AND NOT EXISTS (
+          SELECT 1
+          FROM CartRooms cr
+          WHERE cr.RoomID = r.RoomID
+            AND cr.CartID = pCartID
+            AND cr.CheckInDate < pCheckOut
+            AND cr.CheckOutDate > pCheckIn
+      )
     ORDER BY rt.BasePrice ASC;
 END$$
 
@@ -238,24 +234,25 @@ CREATE PROCEDURE AddRoomToCart(
     IN pRoomID INT,
     IN pCheckIn DATE,
     IN pCheckOut DATE,
-    IN pNumAdults INT
+    IN pNumAdults INT,
+    IN pNumChildren INT
 )
 BEGIN
     DECLARE isAvailable BOOLEAN;
+    DECLARE totalGuests INT;
 
-    -- Validate dates
+    SET totalGuests = pNumAdults + IFNULL(pNumChildren, 0);
+
     IF pCheckIn >= pCheckOut THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Check-out must be after check-in';
     END IF;
 
-    -- Validate number of guests
-    IF pNumAdults <= 0 THEN
+    IF totalGuests <= 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Must have at least 1 guest';
     END IF;
 
-    -- Check if room is already booked
     CALL CheckRoomAvailability(pRoomID, pCheckIn, pCheckOut, isAvailable);
 
     IF isAvailable = 0 THEN
@@ -263,9 +260,11 @@ BEGIN
             SET MESSAGE_TEXT = 'Room not available for these dates';
     END IF;
 
-    -- Add room to cart
-    INSERT INTO CartRooms (CartID, RoomID, CheckInDate, CheckOutDate, NumAdults)
-    VALUES (pCartID, pRoomID, pCheckIn, pCheckOut, pNumAdults);
+    INSERT INTO CartRooms 
+    (CartID, RoomID, CheckInDate, CheckOutDate, NumAdults, NumChildren)
+    VALUES 
+    (pCartID, pRoomID, pCheckIn, pCheckOut, pNumAdults, pNumChildren);
+
 END$$
 
 DELIMITER ;
@@ -317,19 +316,21 @@ CREATE PROCEDURE AddRoomToReservation(
     IN pCheckIn DATE,
     IN pCheckOut DATE,
     IN pNumAdults INT,
+    IN pNumChildren INT,
     OUT pSuccess BOOLEAN,
     OUT pMessage VARCHAR(255)
 )
 BEGIN
     DECLARE isAvailable BOOLEAN;
+    DECLARE totalGuests INT;
 
-    -- Lock room row to prevent concurrent booking
+    SET totalGuests = pNumAdults + IFNULL(pNumChildren, 0);
+
     SELECT RoomID
     FROM Rooms
     WHERE RoomID = pRoomID
     FOR UPDATE;
 
-    -- Check availability
     CALL CheckRoomAvailability(pRoomID, pCheckIn, pCheckOut, isAvailable);
 
     IF isAvailable = 0 THEN
@@ -337,12 +338,14 @@ BEGIN
         SET pMessage = 'Room already booked for these dates';
     ELSE
         INSERT INTO ReservationRooms
-        (ReservationID, CheckInDate, CheckOutDate, NumAdults, RoomID)
-        VALUES (pReservationID, pCheckIn, pCheckOut, pNumAdults, pRoomID);
+        (ReservationID, CheckInDate, CheckOutDate, NumAdults, NumChildren, RoomID)
+        VALUES 
+        (pReservationID, pCheckIn, pCheckOut, pNumAdults, pNumChildren, pRoomID);
 
         SET pSuccess = TRUE;
         SET pMessage = 'Room added successfully';
     END IF;
+
 END$$
 
 DELIMITER ;
@@ -615,15 +618,14 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Create reservation
     SET token = UUID();
+
     INSERT INTO Reservations (GuestID, StatusID, BookingToken)
     VALUES (pGuestID, 1, token);
 
     SET pReservationID = LAST_INSERT_ID();
     SET pBookingToken = token;
 
-    -- Insert payment
     INSERT INTO Payments (
         ReservationID,
         MethodID,
@@ -640,26 +642,22 @@ BEGIN
         'pending'
     );
 
-    -- Insert discount info if any
     IF pDiscountType IS NOT NULL AND pDiscountAmount > 0 THEN
         INSERT INTO ReservationDiscounts
         (ReservationID, DiscountType, DiscountValue, CardNumber)
         VALUES (pReservationID, pDiscountType, pDiscountAmount, pDiscountCardNumber);
     END IF;
 
-    -- Get number of rooms
     SET n = JSON_LENGTH(pCartJSON);
 
     room_loop: WHILE i < n DO
         SET room = JSON_EXTRACT(pCartJSON, CONCAT('$[', i, ']'));
 
-        -- Lock the room row
         SELECT RoomID INTO @rid
         FROM Rooms
         WHERE RoomID = JSON_UNQUOTE(JSON_EXTRACT(room, '$.RoomID'))
         FOR UPDATE;
 
-        -- Check availability
         CALL CheckRoomAvailability(
             JSON_UNQUOTE(JSON_EXTRACT(room, '$.RoomID')),
             JSON_UNQUOTE(JSON_EXTRACT(room, '$.CheckInDate')),
@@ -680,12 +678,13 @@ BEGIN
             LEAVE room_loop;
         ELSE
             INSERT INTO ReservationRooms
-            (ReservationID, CheckInDate, CheckOutDate, NumAdults, RoomID)
+            (ReservationID, CheckInDate, CheckOutDate, NumAdults, NumChildren, RoomID)
             VALUES (
                 pReservationID,
                 JSON_UNQUOTE(JSON_EXTRACT(room, '$.CheckInDate')),
                 JSON_UNQUOTE(JSON_EXTRACT(room, '$.CheckOutDate')),
                 JSON_UNQUOTE(JSON_EXTRACT(room, '$.NumAdults')),
+                IFNULL(JSON_UNQUOTE(JSON_EXTRACT(room, '$.NumChildren')), 0),
                 JSON_UNQUOTE(JSON_EXTRACT(room, '$.RoomID'))
             );
         END IF;
@@ -693,7 +692,6 @@ BEGIN
         SET i = i + 1;
     END WHILE;
 
-    -- Commit if all rooms added successfully
     IF i = n THEN
         SET pSuccess = TRUE;
         SET pMessage = 'Reservation successful';

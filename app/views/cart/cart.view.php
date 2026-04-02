@@ -122,7 +122,13 @@
                                                             OCCUPANCY</div>
                                                         <div
                                                             class="justify-center text-black text-base font-normal font-roboto">
-                                                            <?php echo htmlspecialchars($cart['NumAdults']); ?> Adults
+                                                            <?php
+                                                            $totalGuests = $cart['NumAdults'] + ($cart['NumChildren'] ?? 0);
+                                                            ?>
+                                                            <?php echo $totalGuests; ?>
+                                                            Guest<?php echo $totalGuests > 1 ? 's' : ''; ?>
+                                                            <!-- (<?php echo $cart['NumAdults']; ?> Adults, -->
+                                                            <!-- <?php echo $cart['NumChildren'] ?? 0; ?> Children) -->
                                                         </div>
                                                     </div>
                                                 </div>
@@ -455,7 +461,7 @@
                     const roomData = calculateRoomTotal({
                         basePrice: cart.BasePrice,
                         nights: nights,
-                        numGuests: cart.NumAdults,
+                        numGuests: (Number(cart.NumAdults) + Number(cart.NumChildren || 0)),
                         roomType: cart.RoomTypeName,
                         discountType: cart.discountType || null
                     });
