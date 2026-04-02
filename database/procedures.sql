@@ -643,7 +643,7 @@ BEGIN
         pPaymentMethodID,
         pTotalBeforeDiscount,
         pDiscountAmount,
-        pTotalBeforeDiscount - IFNULL(pDiscountAmount,0),
+        (pTotalBeforeDiscount - IFNULL(pDiscountAmount,0)) * 1.12,
         'pending'
     );
 

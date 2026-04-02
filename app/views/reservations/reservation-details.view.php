@@ -169,7 +169,7 @@ if (!empty($payment) && isset($payment['TotalBeforeDiscount'], $payment['Discoun
                                                     </p>
                                                     <p class="justify-center text-black text-sm font-normal font-roboto">
                                                         <?php echo htmlspecialchars($room['CheckOutDate']); ?>
-                                                        (12:00 PM)
+                                                        (11:00 AM)
                                                     </p>
                                                 </div>
 
