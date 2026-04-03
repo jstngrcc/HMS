@@ -198,6 +198,10 @@ switch ($uri) {
         $pages->admin();
         exit;
 
+    case '/admin/reservations':
+        $pages->adminReservations();
+        exit;
+
     case '/admin-login':
         $pages->admin_login();
         exit;
