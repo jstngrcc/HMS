@@ -15,13 +15,13 @@ class AuthController
         $userModel = new User($GLOBALS['conn']);
         $user = $userModel->getUserByResetToken($token);
 
+        // Validate token and show reset form
         if (!$user) {
             require_once '../app/views/auth/auth.view.php';
             echo "<script>showToast('Token is invalid or expired.', 'error');</script>";
             exit;
         }
 
-        // Token is valid — show reset password form
         require_once '../app/views/auth/reset_password.view.php';
     }
 
@@ -32,6 +32,7 @@ class AuthController
             $email = trim($_POST['email']);
             $password = trim($_POST['password']);
 
+            // Validate email and password are not empty
             if (empty($email) || empty($password)) {
                 echo json_encode([
                     "success" => false,
@@ -44,7 +45,9 @@ class AuthController
                 $userModel = new User($GLOBALS['conn']);
                 $user = $userModel->getUserByEmail($email);
 
+                // Verify user exists and password matches
                 if ($user && password_verify($password, $user->PasswordHash)) {
+                    // Store user info in session and redirect to home
                     $_SESSION['logged_in_user_id'] = $user->UserID;
                     $_SESSION['logged_in_user_name'] = $user->FirstName;
 
@@ -86,6 +89,7 @@ class AuthController
             $email = trim($_POST['email']);
             $password = trim($_POST['password']);
 
+            // Checks if the required fields are filled
             if (empty($fname) || empty($lname) || empty($email) || empty($password) || empty($birthDate)) {
                 echo json_encode(["success" => false, "error" => "Please fill in all fields."]);
                 exit;
@@ -103,6 +107,7 @@ class AuthController
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $userModel = new User($GLOBALS['conn']);
 
+            // Check if email is already registered
             if ($userModel->getUserByEmail($email)) {
                 echo json_encode([
                     "success" => false,
@@ -112,11 +117,12 @@ class AuthController
             }
 
             try {
+                // Create new user account
                 $userModel->createGuestUser($email, $email, $hash, $fname, $lname, $phone, $birthDate);
 
                 $user = $userModel->getUserByEmail($email);
 
-                // Auto-login
+                // Automatically log in the new user and redirect to home
                 $_SESSION['logged_in_user_id'] = $user->UserID;
                 $_SESSION['logged_in_user_name'] = $user->FirstName;
 
@@ -138,6 +144,7 @@ class AuthController
     }
     public function logout()
     {
+        // Destroy session and redirect to home
         session_destroy();
         echo json_encode(["success" => true, "redirect" => "/home"]);
         exit;
@@ -151,6 +158,7 @@ class AuthController
             $userModel = new User($GLOBALS['conn']);
             $user = $userModel->getUserByEmail($email);
 
+            // If user exists, create reset token and send an email
             if ($user) {
                 $token = $userModel->createPasswordResetToken($user->UserID);
 
@@ -171,6 +179,7 @@ class AuthController
             $userModel = new User($GLOBALS['conn']);
             $user = $userModel->getUserByEmail($email);
 
+            // Create and send password reset token if user exists
             if ($user) {
                 $token = $userModel->createPasswordResetToken($user['UserID']);
                 if ($userModel->sendPasswordResetEmail($user['Email'], $token)) {
@@ -187,6 +196,7 @@ class AuthController
     {
         $token = $_POST['token'] ?? null;
 
+        // Validate if reset token is provided
         if (!$token) {
             echo json_encode(["success" => false, "error" => "Missing token."]);
             exit;
@@ -195,6 +205,7 @@ class AuthController
         $userModel = new User($GLOBALS['conn']);
         $user = $userModel->getUserByResetToken($token);
 
+        // Checks if token is still valid and associated with a user
         if (!$user) {
             echo json_encode(["success" => false, "error" => "Invalid or expired token."]);
             exit;
@@ -203,6 +214,7 @@ class AuthController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newPassword = trim($_POST['password']);
 
+            // Validate password strength
             if (
                 strlen($newPassword) < 8
                 || !preg_match('/[A-Z]/', $newPassword)
@@ -214,6 +226,7 @@ class AuthController
                 exit;
             }
 
+            // Update password and clear reset token
             $hash = password_hash($newPassword, PASSWORD_DEFAULT);
             $userModel->updatePasswordByID($user->UserID, $hash);
             $userModel->deleteResetToken($token);
@@ -232,6 +245,7 @@ class AuthController
             exit;
         }
 
+        // Verify if user is authenticated
         if (!isset($_SESSION['logged_in_user_id'])) {
             echo json_encode(["success" => false, "error" => "Unauthorized."]);
             exit;
@@ -254,12 +268,13 @@ class AuthController
             $userModel = new User($GLOBALS['conn']);
             $user = $userModel->getUserByID($userID);
 
+
             if (!$user) {
                 echo json_encode(["success" => false, "error" => "User not found."]);
                 exit;
             }
 
-            // Only check password if changing sensitive info
+            // If new password is provided, current password must be verified
             $requiresPassword = !empty($newPassword);
 
             if ($requiresPassword) {
@@ -269,7 +284,7 @@ class AuthController
                 }
             }
 
-            // Update fields individually if they have values
+            // Update fields if they have values
             if (!empty($fname))
                 $userModel->updateFirstName($fname);
             if (!empty($lname))
@@ -281,6 +296,7 @@ class AuthController
             if (!empty($email))
                 $userModel->updateEmail($email);
 
+            // Validate password strength and updates it
             if (!empty($newPassword)) {
                 if (
                     strlen($newPassword) < 8 ||
@@ -317,6 +333,7 @@ class AuthController
     {
         header('Content-Type: application/json');
 
+        // Verify user if authenticated
         if (!isset($_SESSION['logged_in_user_id'])) {
             echo json_encode(["success" => false, "error" => "Unauthorized"]);
             exit;
@@ -324,6 +341,7 @@ class AuthController
 
         $userID = $_SESSION['logged_in_user_id'];
         $userModel = new User($GLOBALS['conn']);
+        // Get guest profile data
         $guestData = $userModel->getGuestDetails($userID);
 
         if (!$guestData) {

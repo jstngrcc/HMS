@@ -52,11 +52,13 @@ class Reservation
     public function createReservation($guestID, $paymentMethod, $totalAmount)
     {
         try {
+            // Call procedure to create reservation
             $this->conn->execute_query(
                 "CALL CreateReservation(?, ?, ?, @ReservationID, @BookingToken)",
                 [$guestID, $paymentMethod, $totalAmount]
             );
 
+            // Fetch Reservation ID and Booking Token
             $result = $this->conn->query("SELECT @ReservationID AS ReservationID, @BookingToken AS BookingToken;");
 
 
@@ -266,6 +268,7 @@ class Reservation
     public function addRoomToCart($roomID, $checkin, $checkout, $adults)
     {
         try {
+            // Call stored procedure to add room to cart
             $result = $this->conn->execute_query(
                 "CALL AddRoomToCart(?, ?, ?, ?)",
                 [$roomID, $checkin, $checkout, $adults]
@@ -281,6 +284,7 @@ class Reservation
 
     public function showReservations()
     {
+        // Get reservations linked to the logged-in user
         try {
             $userID = $_SESSION["logged_in_user_id"];
 
@@ -324,6 +328,7 @@ class Reservation
     }
     public function getReservationsForUser($userID)
     {
+        // Get reservations linked to a specific user
         $result = $this->conn->execute_query(
             "SELECT r.* 
          FROM Reservations r
@@ -357,6 +362,7 @@ class Reservation
 
     public function isReservationLinkedToUser($reservationID, $userID)
     {
+        // Check if the reservation belongs to the user
         $result = $this->conn->execute_query(
             "SELECT 1 FROM UserReservations WHERE ReservationID = ? AND UserID = ?",
             [$reservationID, $userID]
@@ -367,6 +373,7 @@ class Reservation
 
     public function findByToken($token)
     {
+        // Get reservation based on token
         $result = $this->conn->execute_query(
             "SELECT * FROM Reservations WHERE BookingToken = ?",
             [$token]
@@ -377,6 +384,7 @@ class Reservation
 
     public function getReservationRooms($token)
     {
+        // Get reservation rooms based on token
         $result = $this->conn->execute_query(
             "SELECT
                 res.ReservationID,
@@ -399,6 +407,7 @@ class Reservation
 
     public function checkUserReservation($userID, $reservationID)
     {
+        // Check if the reservation belongs to the user
         $result = $this->conn->execute_query(
             "SELECT 1 FROM UserReservations WHERE UserID = ? AND ReservationID = ? LIMIT 1",
             [$userID, $reservationID]
@@ -408,6 +417,7 @@ class Reservation
 
     public function getReservationWithGuest($token)
     {
+        // Get reservation details with guest based on token
         $result = $this->conn->execute_query(
             "SELECT
             res.ReservationID,
@@ -438,6 +448,7 @@ class Reservation
 
     public function getReservationPayment($reservationID)
     {
+        // Get payment details for a reservation
         $result = $this->conn->execute_query(
             "SELECT 
             p.PaymentID, 
