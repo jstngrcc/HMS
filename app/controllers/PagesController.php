@@ -2,6 +2,7 @@
 
 require_once '../app/models/Reservation.php';
 require_once '../app/models/Room.php';
+require_once '../app/models/Statistics.php';
 
 class PagesController
 {
@@ -12,14 +13,19 @@ class PagesController
         require_once '../app/views/static/privacy.view.php';
     }
 
-    public function admin() 
+    public function admin()
     {
         $logged_in = $this->getAuthState();
         $cartCount = $this->getCartCount();
+        $statisticsModel = new Statistics($GLOBALS['conn']);
+
+        $reservationsWeek = $statisticsModel->getReservationsLast7Days();
+        $reservationsMonth = $statisticsModel->getReservationsThisMonth();
+        $revenue6Months = $statisticsModel->getRevenueLast6Months();
+
         require_once '../app/views/admin/admin.view.php';
     }
-
-    public function adminReservations() 
+    public function adminReservations()
     {
         $logged_in = $this->getAuthState();
         $cartCount = $this->getCartCount();

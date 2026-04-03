@@ -41,21 +41,45 @@
 
   <!-- Page toggle -->
   <script>
-    // Toggle between pages
-    function show(id) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
+    const reservationsWeek = <?php echo json_encode($reservationsWeek); ?>;
+    const reservationsMonth = <?php echo json_encode($reservationsMonth); ?>;
+    const revenue6Months = <?php echo json_encode($revenue6Months); ?>;
 
-    // Revenue chart (line)
+    // Reservations Last 7 Days
+    new Chart(document.getElementById('reservationChart'), {
+      type: 'bar',
+      data: {
+        labels: reservationsWeek.map(r => r.day),
+        datasets: [
+          { label: 'Booked', data: reservationsWeek.map(r => parseInt(r.booked)), backgroundColor: '#10b981' },
+          { label: 'Canceled', data: reservationsWeek.map(r => parseInt(r.canceled)), backgroundColor: '#ef4444' }
+        ]
+      },
+      options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
+    });
+
+    // Reservations This Month (per week)
+    new Chart(document.getElementById('monthChart'), {
+      type: 'bar',
+      data: {
+        labels: reservationsMonth.map((r, i) => 'Week ' + (i + 1)),
+        datasets: [
+          { label: 'Booked', data: reservationsMonth.map(r => parseInt(r.booked)), backgroundColor: '#3b82f6' },
+          { label: 'Canceled', data: reservationsMonth.map(r => parseInt(r.canceled)), backgroundColor: '#f59e0b' }
+        ]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    // Revenue Last 6 Months
     new Chart(document.getElementById('revenueChart'), {
       type: 'line',
       data: {
-        labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
+        labels: revenue6Months.map(r => r.month),
         datasets: [{
           label: 'Revenue',
-          data: [200000, 250000, 315060, 280000, 290000, 300000],
-          borderColor: '#10b981', // Tailwind green-500 hayop na yan need iconfigure pa
+          data: revenue6Months.map(r => parseFloat(r.revenue)),
+          borderColor: '#10b981',
           backgroundColor: '#10b981',
           fill: false,
           tension: 0.3
@@ -65,43 +89,6 @@
         responsive: true,
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: false } }
-      }
-    });
-
-    // Reservations chart (bar)
-    new Chart(document.getElementById('reservationChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [
-          { label: 'Booked', data: [40, 50, 60, 30, 70, 80, 55], backgroundColor: '#10b981' },
-          { label: 'Canceled', data: [5, 10, 8, 3, 12, 7, 6], backgroundColor: '#ef4444' } // Tailwind red-500 fckthishsit 
-        ]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { stacked: true },
-          y: { stacked: true, beginAtZero: true }
-        }
-      }
-    });
-
-    // Reservations chart (This Month - bar)
-    new Chart(document.getElementById('monthChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-        datasets: [
-          { label: 'Booked', data: [120, 150, 180, 140], backgroundColor: '#3b82f6' },
-          { label: 'Canceled', data: [15, 20, 40, 12], backgroundColor: '#f59e0b' }
-        ]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: true }
-        }
       }
     });
 
